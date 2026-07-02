@@ -1,8 +1,10 @@
+import type { Metadata } from 'next'
 import './globals.css'
+import Navbar from '@/components/Navbar'
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'ANAREKA-CI',
-  description: 'Espace membres',
+  description: 'Gestion des membres ANAREKA-CI',
 }
 
 export default function RootLayout({
@@ -12,7 +14,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr">
-      <body>{children}</body>
+      <body className="bg-gray-50 min-h-screen">
+        <Navbar />
+        {children}
+      </body>
     </html>
   )
 }

@@ -1,9 +1,7 @@
-﻿import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+﻿import { createClient } from '@/lib/supabase/server'
 
 export default async function AnnoncesPage() {
   const supabase = await createClient()
-
   const { data: annonces, error } = await supabase
     .from('annonces')
     .select('id, titre, contenu, epingle, publie_le, cree_le')
@@ -12,17 +10,8 @@ export default async function AnnoncesPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      <header className="bg-green-700 text-white">
-        <div className="max-w-4xl mx-auto px-6 py-5 flex items-center justify-between">
-          <h1 className="text-xl font-bold">ANAREKA-CI</h1>
-          <Link href="/dashboard" className="text-sm bg-white text-green-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition">
-            Retour
-          </Link>
-        </div>
-      </header>
-
       <div className="max-w-4xl mx-auto px-6 py-8">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">Annonces</h2>
+        <h1 className="text-2xl font-bold text-gray-800 mb-6">Annonces</h1>
 
         {error && (
           <div className="bg-red-50 text-red-700 text-sm rounded-lg px-4 py-3 mb-4">
