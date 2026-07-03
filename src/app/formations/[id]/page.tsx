@@ -39,56 +39,63 @@ export default async function FormationDetailPage({
     await sInscrire(id)
   }
 
+  const infoCls = "text-sm text-anareka-noir/70 mb-1 flex items-center gap-1.5"
+  const dotCls = "inline-block w-1.5 h-1.5 rounded-full bg-anareka-or"
+
   return (
-    <main className="min-h-screen bg-gray-50">
-      <header className="bg-green-700 text-white px-6 py-4 flex items-center gap-4">
-        <a href="/formations" className="text-sm hover:underline">Retour</a>
-        <h1 className="text-lg font-bold">ANAREKA-CI</h1>
-      </header>
+    <main className="min-h-screen bg-anareka-ivoire">
+      <div className="max-w-2xl mx-auto px-6 py-8 animate-fade-up">
+        <a href="/formations" className="text-xs font-semibold uppercase tracking-wide text-anareka-vert hover:text-anareka-or transition-colors">
+          ← Retour aux formations
+        </a>
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">{formation.titre}</h2>
+        <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure border-t-4 border-t-anareka-or shadow-anareka p-8 mt-6">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-anareka-or">Formation</span>
+          <h2 className="font-serif text-2xl font-bold text-anareka-vert mt-1 mb-4">{formation.titre}</h2>
 
-          {formation.lieu && (
-            <p className="text-sm text-gray-500 mb-1">Lieu : {formation.lieu}</p>
-          )}
-          {formation.date_debut && (
-            <p className="text-sm text-gray-500 mb-1">
-              Date : {new Date(formation.date_debut).toLocaleDateString('fr-FR', {
-                day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
-              })}
-            </p>
-          )}
-          {formation.capacite && (
-            <p className="text-sm text-gray-500 mb-4">
-              Places : {nbInscrits ?? 0} / {formation.capacite}
-            </p>
-          )}
+          <div className="space-y-1 mb-4">
+            {formation.lieu && (
+              <p className={infoCls}><span className={dotCls} /> Lieu : {formation.lieu}</p>
+            )}
+            {formation.date_debut && (
+              <p className={infoCls}>
+                <span className={dotCls} /> Date : {new Date(formation.date_debut).toLocaleDateString('fr-FR', {
+                  day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                })}
+              </p>
+            )}
+            {formation.capacite && (
+              <p className={infoCls}>
+                <span className={dotCls} /> Places : {nbInscrits ?? 0} / {formation.capacite}
+              </p>
+            )}
+          </div>
 
           {formation.description && (
-            <p className="text-gray-700 mt-4 whitespace-pre-line">{formation.description}</p>
+            <p className="text-anareka-noir/80 mt-4 whitespace-pre-line leading-relaxed border-t border-anareka-bordure pt-4">
+              {formation.description}
+            </p>
           )}
 
           <div className="mt-6">
             {inscription ? (
-              <div className="bg-green-50 text-green-700 text-sm font-medium rounded-lg px-4 py-3">
+              <div className="bg-anareka-vert-pale text-anareka-vert-clair text-sm font-medium rounded-anareka px-4 py-3 border border-anareka-vert-clair/20">
                 {inscription.statut === 'liste_attente'
                   ? "En liste d'attente"
-                  : "Vous etes inscrit(e) a cette formation"}
+                  : "Vous êtes inscrit(e) à cette formation"}
               </div>
             ) : formation.ouvert_inscription ? (
               <form action={inscrireAction}>
                 <button
                   type="submit"
-                  className="bg-green-700 text-white font-semibold rounded-lg px-6 py-2.5 hover:bg-green-800 transition"
+                  className="bg-anareka-vert text-white font-semibold text-sm uppercase tracking-wide rounded-anareka px-6 py-2.5 hover:bg-anareka-vert-clair transition-colors shadow-anareka"
                 >
-                  S inscrire a cette formation
+                  S&apos;inscrire à cette formation
                 </button>
               </form>
             ) : (
-              <div className="bg-gray-100 text-gray-500 text-sm rounded-lg px-4 py-3">
-                Les inscriptions sont fermees pour cette formation.
+              <div className="bg-anareka-gris-clair text-anareka-gris text-sm rounded-anareka px-4 py-3">
+                Les inscriptions sont fermées pour cette formation.
               </div>
             )}
           </div>

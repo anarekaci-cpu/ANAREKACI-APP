@@ -5,40 +5,49 @@ export default async function AnnoncesPage() {
   const { data: annonces, error } = await supabase
     .from('annonces')
     .select('id, titre, contenu, epingle, publie_le, cree_le')
+    .eq('publie', true)
     .order('epingle', { ascending: false })
     .order('publie_le', { ascending: false, nullsFirst: false })
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">Annonces</h1>
+    <main className="min-h-screen bg-anareka-ivoire">
+      <div className="max-w-4xl mx-auto px-6 py-8 animate-fade-up">
+        <div className="mb-8">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-anareka-or">Association</span>
+          <h1 className="font-serif text-3xl font-bold text-anareka-vert mt-1">Annonces</h1>
+          <div className="w-12 h-0.5 bg-anareka-or mt-3" />
+        </div>
 
         {error && (
-          <div className="bg-red-50 text-red-700 text-sm rounded-lg px-4 py-3 mb-4">
+          <div className="bg-red-50 text-red-700 border border-red-200 text-sm rounded-anareka px-4 py-3 mb-4">
             Erreur de chargement : {error.message}
           </div>
         )}
 
         {!error && (!annonces || annonces.length === 0) && (
-          <div className="bg-white rounded-2xl shadow-sm p-8 text-center text-gray-500">
+          <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-12 text-center text-anareka-gris">
             Aucune annonce pour le moment.
           </div>
         )}
 
         <div className="space-y-4">
           {annonces?.map((a) => (
-            <article key={a.id} className="bg-white rounded-2xl shadow-sm p-6">
+            <article
+              key={a.id}
+              className={`bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-6 transition-all duration-300 hover:shadow-anareka-hov ${a.epingle ? 'border-l-4 border-l-anareka-or' : 'border-l-4 border-l-transparent'}`}
+            >
               <div className="flex items-start justify-between gap-4">
-                <h3 className="text-lg font-semibold text-gray-800">{a.titre}</h3>
+                <h3 className="font-serif text-xl font-semibold text-anareka-vert">{a.titre}</h3>
                 {a.epingle && (
-                  <span className="shrink-0 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-medium">
-                    Epingle
+                  <span className="shrink-0 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide bg-anareka-or-pale text-anareka-terre border border-anareka-or/40 px-2.5 py-1 rounded-full font-semibold">
+                    Épinglé
                   </span>
                 )}
               </div>
-              <p className="text-gray-600 mt-2 whitespace-pre-wrap">{a.contenu}</p>
+              <p className="text-anareka-noir/80 mt-2 whitespace-pre-wrap leading-relaxed">{a.contenu}</p>
               {a.publie_le && (
-                <p className="text-xs text-gray-400 mt-4">
+                <p className="text-xs text-anareka-gris mt-4 flex items-center gap-1.5">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-anareka-or" />
                   {new Date(a.publie_le).toLocaleDateString('fr-FR', {
                     day: 'numeric', month: 'long', year: 'numeric',
                   })}

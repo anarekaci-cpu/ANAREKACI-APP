@@ -2,100 +2,93 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 
+const labelCls = "block text-xs font-semibold uppercase tracking-wide text-anareka-vert mb-1.5"
+const champCls = "w-full bg-anareka-ivoire border border-anareka-bordure rounded-anareka px-4 py-2.5 text-sm text-anareka-noir focus:outline-none focus:border-anareka-or focus:ring-2 focus:ring-anareka-or/20 focus:bg-white transition"
+const submitCls = "bg-anareka-vert text-white font-semibold text-sm uppercase tracking-wide rounded-anareka px-6 py-2.5 hover:bg-anareka-vert-clair transition-colors"
+
 export default async function AdminAnnoncesPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const auth = await supabase.auth.getUser()
+  const user = auth.data.user
   if (!user) redirect("/login")
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single()
+  const prof = await supabase.from("profiles").select("role").eq("id", user.id).single()
+  const role = prof.data?.role
+  if (role !== "admin") redirect("/dashboard")
 
-  if (!profile || (profile.role !== "admin" && profile.role !== "tresorier")) {
-    redirect("/dashboard")
-  }
-
-  const { data: annonces } = await supabase
-    .from("annonces")
-    .select("*")
-    .order("cree_le", { ascending: false })
+  const res = await supabase.from("annonces").select("*").order("cree_le", { ascending: false })
+  const annonces = res.data
 
   async function creerAnnonce(formData: FormData) {
     "use server"
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const auth = await supabase.auth.getUser()
+    const user = auth.data.user
     if (!user) return
-
+    const estPublie = formData.get("publie") === "on"
     await supabase.from("annonces").insert({
       titre: formData.get("titre") as string,
       contenu: formData.get("contenu") as string,
       auteur_id: user.id,
-      publie: formData.get("publie") === "on",
-      publie_le: formData.get("publie") === "on" ? new Date().toISOString() : null,
+      publie: estPublie,
+      publie_le: estPublie ? new Date().toISOString() : null,
     })
     revalidatePath("/admin/annonces")
   }
 
-  async function togglePublier(annonceId: string, publie: boolean) {
+  async function togglePublier(id: string, publie: boolean) {
     "use server"
     const supabase = await createClient()
     await supabase.from("annonces").update({
       publie: !publie,
       publie_le: !publie ? new Date().toISOString() : null,
-    }).eq("id", annonceId)
+    }).eq("id", id)
     revalidatePath("/admin/annonces")
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <header className="bg-gray-900 text-white px-6 py-4 flex items-center justify-between">
-        <h1 className="text-lg font-bold">Gestion des annonces</h1>
-        <a href="/admin" className="text-sm hover:underline">Retour admin</a>
+    <main className="min-h-screen bg-anareka-ivoire">
+      <header className="bg-anareka-noir text-white border-b-2 border-anareka-or">
+        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
+          <h1 className="font-serif text-xl font-bold">Gestion des annonces</h1>
+          <a href="/admin" className="text-xs uppercase tracking-wide text-anareka-or-clair hover:text-anareka-or">Retour admin</a>
+        </div>
       </header>
 
-      <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">Nouvelle annonce</h2>
+      <div className="max-w-3xl mx-auto px-4 py-8 space-y-6 animate-fade-up">
+        <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure border-t-4 border-t-anareka-or shadow-anareka p-6">
+          <h2 className="font-serif text-xl font-bold text-anareka-vert mb-4">Nouvelle annonce</h2>
           <form action={creerAnnonce} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Titre</label>
-              <input name="titre" type="text" required
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500" />
+              <label className={labelCls}>Titre</label>
+              <input name="titre" type="text" required className={champCls} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contenu</label>
-              <textarea name="contenu" required rows={4}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500" />
+              <label className={labelCls}>Contenu</label>
+              <textarea name="contenu" required rows={4} className={champCls} />
             </div>
             <div className="flex items-center gap-2">
-              <input name="publie" type="checkbox" id="publie" className="rounded" />
-              <label htmlFor="publie" className="text-sm text-gray-700">Publier immediatement</label>
+              <input name="publie" type="checkbox" id="publie" className="rounded accent-anareka-vert" />
+              <label htmlFor="publie" className="text-sm text-anareka-noir">Publier immediatement</label>
             </div>
-            <button type="submit"
-              className="bg-gray-900 text-white font-semibold rounded-lg px-6 py-2.5 hover:bg-gray-700 transition">
-              Creer l annonce
-            </button>
+            <button type="submit" className={submitCls}>Creer l&apos;annonce</button>
           </form>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">Annonces existantes</h2>
+        <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-6">
+          <h2 className="font-serif text-xl font-bold text-anareka-vert mb-4">Annonces existantes</h2>
           <div className="space-y-3">
             {annonces?.length === 0 && (
-              <p className="text-sm text-gray-400">Aucune annonce pour le moment.</p>
+              <p className="text-sm text-anareka-gris">Aucune annonce pour le moment.</p>
             )}
             {annonces?.map((a) => (
-              <div key={a.id} className="flex items-start justify-between gap-4 border border-gray-100 rounded-xl p-4">
+              <div key={a.id} className="flex items-start justify-between gap-4 border border-anareka-bordure rounded-anareka p-4">
                 <div>
-                  <p className="font-semibold text-gray-800 text-sm">{a.titre}</p>
-                  <p className="text-xs text-gray-400 mt-1">{a.publie ? "Publie" : "Brouillon"}</p>
+                  <p className="font-semibold text-anareka-noir text-sm">{a.titre}</p>
+                  <p className="text-xs text-anareka-gris mt-1">{a.publie ? "Publie" : "Brouillon"}</p>
                 </div>
-                <form action={async () => { "use server"; await togglePublier(a.id, a.publie) }}>
-                  <button className={`text-xs font-semibold px-3 py-1.5 rounded-lg ${
-                    a.publie ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
-                  }`}>
+                <form action={togglePublier.bind(null, a.id, a.publie)}>
+                  <button className={a.publie ? "text-xs font-semibold uppercase px-3 py-1.5 rounded-anareka bg-red-100 text-red-700 hover:bg-red-200" : "text-xs font-semibold uppercase px-3 py-1.5 rounded-anareka bg-anareka-vert-pale text-anareka-vert-clair hover:bg-anareka-vert hover:text-white"}>
                     {a.publie ? "Depublier" : "Publier"}
                   </button>
                 </form>

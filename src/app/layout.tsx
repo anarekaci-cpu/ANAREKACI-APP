@@ -13,8 +13,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="fr">
-      <body className="bg-gray-50 min-h-screen">
+    <html lang="fr" data-scroll-behavior="smooth">
+      <body className="bg-anareka-ivoire min-h-screen">
         <Navbar />
         {children}
       </body>

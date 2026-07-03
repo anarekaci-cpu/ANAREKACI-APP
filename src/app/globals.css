@@ -1,1 +1,117 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss";
+
+@theme {
+  /* ===== Couleurs ANAREKA-CI ===== */
+  --color-anareka-noir: #0e1a12;
+  --color-anareka-vert: #1a3d2b;
+  --color-anareka-vert-med: #1f4e3a;
+  --color-anareka-vert-clair: #2d6b4f;
+  --color-anareka-vert-pale: #edf4ef;
+  --color-anareka-or: #c9a84c;
+  --color-anareka-or-clair: #e8c97a;
+  --color-anareka-or-pale: #fdf8ec;
+  --color-anareka-terre: #6b3a1f;
+  --color-anareka-terre-fonce: #4a2818;
+  --color-anareka-ivoire: #f8f4ec;
+  --color-anareka-blanc: #ffffff;
+  --color-anareka-gris: #7a7a7a;
+  --color-anareka-gris-clair: #f0f2ee;
+  --color-anareka-bordure: #e0e8e0;
+
+  /* ===== Polices ===== */
+  --font-serif: "Cormorant Garamond", serif;
+  --font-sans: "Outfit", sans-serif;
+
+  /* ===== Rayons ===== */
+  --radius-anareka: 10px;
+  --radius-anareka-lg: 14px;
+
+  /* ===== Ombres ===== */
+  --shadow-anareka: 0 6px 24px rgba(26, 61, 43, 0.08);
+  --shadow-anareka-hov: 0 20px 48px rgba(26, 61, 43, 0.16);
+  --shadow-anareka-or: 0 4px 20px rgba(201, 168, 76, 0.35);
+
+  /* ===== Animations → utilisables en animate-* ===== */
+  --animate-fade-up: anareka-fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade-in: anareka-fade-in 0.6s ease both;
+  --animate-shimmer-gold: anareka-shimmer-text 4s linear infinite;
+  --animate-logo-pulse: anareka-logo-pulse 4s ease-in-out infinite;
+  --animate-btn-pulse: anareka-btn-pulse 2.5s ease-in-out infinite;
+  --animate-float: anareka-float 3.5s ease-in-out infinite;
+  --animate-bounce-in: anareka-bounce-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* =====================================================
+   KEYFRAMES (hors @theme)
+   ===================================================== */
+@keyframes anareka-fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes anareka-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes anareka-shimmer-text {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes anareka-logo-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(201, 168, 76, 0); }
+  50%      { transform: scale(1.04); box-shadow: 0 0 32px 8px rgba(201, 168, 76, 0.18); }
+}
+@keyframes anareka-btn-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 168, 76, 0.5); }
+  60%      { box-shadow: 0 0 0 10px rgba(201, 168, 76, 0); }
+}
+@keyframes anareka-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+@keyframes anareka-bounce-in {
+  0%   { opacity: 0; transform: scale(0.85); }
+  60%  { opacity: 1; transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+/* =====================================================
+   BASE
+   ===================================================== */
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--color-anareka-ivoire);
+  color: var(--color-anareka-noir);
+  line-height: 1.6;
+}
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--color-anareka-ivoire); }
+::-webkit-scrollbar-thumb { background: var(--color-anareka-or); border-radius: 10px; }
+
+*:focus-visible { outline: 2px solid var(--color-anareka-or); outline-offset: 3px; }
+
+/* =====================================================
+   SHIMMER OR (classe manuelle, pas un utilitaire Tailwind)
+   ===================================================== */
+.text-shimmer-gold {
+  background: linear-gradient(90deg, #e8c97a 20%, #fff 40%, #c9a84c 60%, #fff 80%, #e8c97a 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: anareka-shimmer-text 4s linear infinite;
+}
+
+/* =====================================================
+   MOUVEMENT RÉDUIT
+   ===================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

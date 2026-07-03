@@ -12,30 +12,36 @@ export default async function AdminPage() {
     .eq('id', user.id)
     .single()
 
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'tresorier')) {
+  if (!profile || profile.role !== 'admin') {
     redirect('/dashboard')
   }
 
+  const carteCls = "bg-anareka-vert-med border border-anareka-vert-clair/30 rounded-anareka-lg p-6 hover:border-anareka-or hover:shadow-anareka-or transition-all duration-300"
+  const titreCarteCls = "font-serif text-xl font-bold text-white mb-2"
+  const descCarteCls = "text-xs text-anareka-or-clair/80 mt-1"
+
   return (
-    <main className="min-h-screen bg-gray-50">
-      <header className="bg-gray-900 text-white px-6 py-4 flex items-center justify-between">
-        <h1 className="text-lg font-bold">Administration ANAREKA-CI</h1>
-        <a href="/dashboard" className="text-sm hover:underline">Retour au site</a>
+    <main className="min-h-screen bg-anareka-noir">
+      <header className="border-b-2 border-anareka-or">
+        <div className="max-w-3xl mx-auto px-6 py-6">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-anareka-or-clair">Espace</span>
+          <h1 className="font-serif text-2xl font-bold text-white mt-1">Administration ANAREKA-CI</h1>
+        </div>
       </header>
 
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <a href="/admin/membres" className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-md transition">
-            <div className="text-2xl mb-2">Membres</div>
-            <div className="text-xs text-gray-400 mt-1">Valider, suspendre, gerer les roles</div>
+          <a href="/admin/membres" className={carteCls}>
+            <div className={titreCarteCls}>Membres</div>
+            <div className={descCarteCls}>Valider, suspendre, gérer les rôles</div>
           </a>
-          <a href="/admin/annonces" className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-md transition">
-            <div className="text-2xl mb-2">Annonces</div>
-            <div className="text-xs text-gray-400 mt-1">Creer et publier des annonces</div>
+          <a href="/admin/annonces" className={carteCls}>
+            <div className={titreCarteCls}>Annonces</div>
+            <div className={descCarteCls}>Créer et publier des annonces</div>
           </a>
-          <a href="/admin/formations" className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-md transition">
-            <div className="text-2xl mb-2">Formations</div>
-            <div className="text-xs text-gray-400 mt-1">Creer de nouvelles formations</div>
+          <a href="/admin/formations" className={carteCls}>
+            <div className={titreCarteCls}>Formations</div>
+            <div className={descCarteCls}>Créer de nouvelles formations</div>
           </a>
         </div>
       </div>
