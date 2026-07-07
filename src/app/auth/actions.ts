@@ -3,29 +3,30 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 const DOMAINE = '@asso.interne'
-const IDENTIFIANT_VALIDE = /^[a-z0-9._-]+$/
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
-  const identifiantRaw = formData.get('identifiant')
+  const telephoneRaw = formData.get('telephone')
   const password = formData.get('password')
 
-  if (typeof identifiantRaw !== 'string' || typeof password !== 'string') {
+  if (typeof telephoneRaw !== 'string' || typeof password !== 'string') {
     return redirect('/login?error=Champs+manquants')
   }
 
-  const identifiant = identifiantRaw.trim().toLowerCase()
-  if (!IDENTIFIANT_VALIDE.test(identifiant)) {
-    return redirect('/login?error=Identifiant+ou+mot+de+passe+incorrect')
+  const telephone = telephoneRaw.trim().replace(/\s+/g, '')
+
+  if (telephone.length < 8) {
+    return redirect('/login?error=Telephone+invalide')
   }
 
-  const email = `${identifiant}${DOMAINE}`
+  const email = `${telephone}${DOMAINE}`
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
-    return redirect('/login?error=Identifiant+ou+mot+de+passe+incorrect')
+    return redirect('/login?error=Telephone+ou+mot+de+passe+incorrect')
   }
 
   revalidatePath('/', 'layout')
@@ -34,44 +35,67 @@ export async function login(formData: FormData) {
 
 export async function register(formData: FormData) {
   const supabase = await createClient()
-  const identifiantRaw = formData.get('identifiant')
-  const password = formData.get('password')
   const nom_complet = formData.get('nom_complet')
-  const telephone = formData.get('telephone')
+  const telephoneRaw = formData.get('telephone')
+  const password = formData.get('password')
 
   if (
-    typeof identifiantRaw !== 'string' ||
-    typeof password !== 'string' ||
-    typeof nom_complet !== 'string'
+    typeof nom_complet !== 'string' ||
+    typeof telephoneRaw !== 'string' ||
+    typeof password !== 'string'
   ) {
     return redirect('/register?error=' + encodeURIComponent('Champs obligatoires manquants'))
   }
 
-  const identifiant = identifiantRaw.trim().toLowerCase()
-  if (!IDENTIFIANT_VALIDE.test(identifiant)) {
-    return redirect('/register?error=' + encodeURIComponent('Identifiant invalide : lettres, chiffres, points, tirets uniquement'))
+  const telephone = telephoneRaw.trim().replace(/\s+/g, '')
+
+  if (telephone.length < 8) {
+    return redirect('/register?error=' + encodeURIComponent('Téléphone invalide'))
   }
 
-  const email = `${identifiant}${DOMAINE}`
-  const { error } = await supabase.auth.signUp({
+  if (password.length < 8) {
+    return redirect('/register?error=' + encodeURIComponent('Mot de passe trop court (8 min)'))
+  }
+
+  const email = `${telephone}${DOMAINE}`
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: {
-        identifiant,
+        identifiant: telephone,
         nom_complet,
-        telephone: typeof telephone === 'string' ? telephone : '',
+        telephone,
       },
     },
   })
 
   if (error) {
-    const msg = error.message.includes('already registered')
-      ? 'Cet identifiant est déjà utilisé'
-      : "Erreur lors de l'inscription, réessayez"
-    return redirect('/register?error=' + encodeURIComponent(msg))
+    console.error('ERREUR SIGNUP:', JSON.stringify(error))
+    return redirect('/register?error=' + encodeURIComponent(error.message || JSON.stringify(error)))
   }
 
+  if (!data.user) {
+    return redirect('/register?error=' + encodeURIComponent('Compte créé mais session introuvable. Connectez-vous.'))
+  }
+
+  const admin = createAdminClient()
+  const { error: membreError } = await admin.from('membres').insert({
+    compte_id: data.user.id,
+    identifiant: telephone,
+    nom_complet,
+    telephone,
+    email,
+    statut: 'en_attente',
+    role: 'membre',
+  })
+
+  if (membreError) {
+    console.error('ERREUR CREATION MEMBRE:', JSON.stringify(membreError))
+    return redirect('/register?error=' + encodeURIComponent('Compte créé, mais la fiche membre n\'a pas pu être enregistrée. Contactez le bureau.'))
+  }
+
+  revalidatePath('/', 'layout')
   redirect('/dashboard')
 }
 

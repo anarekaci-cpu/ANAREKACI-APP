@@ -1,21 +1,20 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { changerStatut, changerRole } from "./actions"
+import { estAdmin, getMembreParCompte } from "@/lib/membres"
 
 export default async function AdminMembresPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single()
-  if (!profile || profile.role !== "admin") {
+
+  const { data: monProfil } = await getMembreParCompte(supabase, user.id)
+  if (!monProfil || !estAdmin(monProfil.role)) {
     redirect("/dashboard")
   }
+
   const { data: membres } = await supabase
-    .from("profiles")
+    .from("membres")
     .select("*")
     .order("cree_le", { ascending: false })
 

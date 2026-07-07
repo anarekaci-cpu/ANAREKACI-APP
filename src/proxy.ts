@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { estAdmin } from '@/lib/membres'
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -22,29 +23,45 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
-  const { pathname } = request.nextUrl
+  const auth = await supabase.auth.getUser()
+  const user = auth.data.user
+  const pathname = request.nextUrl.pathname
 
+  // Routes protégées
   const protectedPaths = ['/dashboard', '/cotisations', '/formations', '/annonces', '/admin']
   const isProtected = protectedPaths.some(p => pathname.startsWith(p))
   if (isProtected && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Protection renforcée des routes /admin/* : rôle admin ou trésorier requis
-  if (pathname.startsWith('/admin') && user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
+  // Vérifier si l'utilisateur a une fiche membre (sauf pour la page d'attente)
+  if (user && pathname !== '/attente-validation') {
+    const membreQuery = await supabase
+      .from('membres')
+      .select('id, role')
+      .eq('compte_id', user.id)
+      .maybeSingle()
 
-    const rolesAutorises = ['admin', 'tresorier']
-    if (!profile || !rolesAutorises.includes(profile.role)) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+    // Si pas de fiche membre, rediriger vers l'attente
+    if (!membreQuery.data) {
+      if (pathname.startsWith('/admin')) {
+        return NextResponse.redirect(new URL('/attente-validation', request.url))
+      }
+      // Pour les routes non-admin, on redirige aussi sauf si c'est déjà la page d'attente
+      if (!pathname.startsWith('/auth/') && pathname !== '/login' && pathname !== '/register') {
+        return NextResponse.redirect(new URL('/attente-validation', request.url))
+      }
+    }
+
+    // Protection admin
+    if (pathname.startsWith('/admin') && membreQuery.data) {
+      if (!estAdmin(membreQuery.data.role)) {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+      }
     }
   }
 
+  // Routes d'auth (login/register) inaccessibles si connecté
   const authPaths = ['/login', '/register']
   const isAuthPage = authPaths.some(p => pathname.startsWith(p))
   if (user && isAuthPage) {

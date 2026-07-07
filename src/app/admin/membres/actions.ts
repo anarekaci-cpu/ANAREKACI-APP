@@ -2,19 +2,16 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
+import { estAdmin, getMembreParCompte } from "@/lib/membres"
 
 async function checkAdmin() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single()
+  const { data: membre } = await getMembreParCompte(supabase, user.id)
+  if (!membre || !estAdmin(membre.role)) return null
 
-  if (!profile || profile.role !== "admin") return null
   return supabase
 }
 
@@ -23,7 +20,7 @@ export async function changerStatut(membreId: string, statut: "actif" | "suspend
   if (!supabase) return { error: "Non autorise" }
 
   const { error } = await supabase
-    .from("profiles")
+    .from("membres")
     .update({ statut })
     .eq("id", membreId)
 
@@ -33,12 +30,12 @@ export async function changerStatut(membreId: string, statut: "actif" | "suspend
   return { success: true }
 }
 
-export async function changerRole(membreId: string, role: "membre" | "tresorier" | "admin") {
+export async function changerRole(membreId: string, role: "membre" | "bureau" | "admin") {
   const supabase = await checkAdmin()
   if (!supabase) return { error: "Non autorise" }
 
   const { error } = await supabase
-    .from("profiles")
+    .from("membres")
     .update({ role })
     .eq("id", membreId)
 

@@ -18,47 +18,34 @@ export default async function LoginPage({
 
         {error && (
           <div className="bg-red-50 text-red-700 border border-red-200 text-sm rounded-anareka px-4 py-3 mb-4">
-            {error}
+            {decodeURIComponent(error)}
           </div>
         )}
 
         <form action={login} className="space-y-4">
           <div>
-            <label className={labelCls}>
-              Identifiant
-            </label>
-            <input
-              name="identifiant"
-              type="text"
-              required
-              placeholder="prenom.nom"
-              className={champCls}
-            />
+            <label className={labelCls}>Téléphone</label>
+            <input name="telephone" type="tel" required placeholder="07 00 00 00 00" className={champCls} />
           </div>
           <div>
-            <label className={labelCls}>
-              Mot de passe
-            </label>
-            <input
-              name="password"
-              type="password"
-              required
-              placeholder="••••••••"
-              className={champCls}
-            />
+            <label className={labelCls}>Mot de passe</label>
+            <input name="password" type="password" required placeholder="••••••••" className={champCls} />
           </div>
-          <button
-            type="submit"
-            className="w-full bg-anareka-vert text-white font-semibold text-sm uppercase tracking-wide rounded-anareka py-2.5 hover:bg-anareka-vert-clair transition-colors shadow-anareka"
-          >
+          <button type="submit" className="w-full bg-anareka-vert text-white font-semibold text-sm uppercase tracking-wide rounded-anareka py-2.5 hover:bg-anareka-vert-clair transition-colors shadow-anareka">
             Se connecter
           </button>
         </form>
 
+        <p className="text-center text-sm mt-3">
+          <a href="/auth/mot-de-passe-oublie" className="text-anareka-vert font-medium hover:text-anareka-or transition-colors">
+            Mot de passe oublié ?
+          </a>
+        </p>
+
         <p className="text-center text-sm text-anareka-gris mt-4">
           Pas encore membre ?{' '}
           <a href="/register" className="text-anareka-vert font-semibold hover:text-anareka-or transition-colors">
-            S&apos;inscrire
+            S'inscrire
           </a>
         </p>
       </div>

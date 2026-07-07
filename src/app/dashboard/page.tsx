@@ -4,16 +4,33 @@ import Link from 'next/link'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const auth = await supabase.auth.getUser()
+  const user = auth.data.user
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
+  const membreQuery = await supabase
+    .from('membres')
     .select('*')
-    .eq('id', user.id)
-    .single()
+    .eq('compte_id', user.id)
+    .maybeSingle()
+  const membre = membreQuery.data
 
-  const estActif = profile?.statut === 'actif'
+  // Si pas de fiche, rediriger vers l'attente
+  if (!membre) {
+    redirect('/attente-validation')
+  }
+
+  const estActif = membre.statut === 'actif'
+
+  const badgeClasses = estActif
+    ? 'inline-block mt-4 text-xs font-semibold uppercase tracking-wide px-4 py-1.5 rounded-full border bg-anareka-vert-pale text-anareka-vert-clair border-anareka-vert-clair/30'
+    : 'inline-block mt-4 text-xs font-semibold uppercase tracking-wide px-4 py-1.5 rounded-full border bg-anareka-or-pale text-anareka-terre border-anareka-or/40'
+
+  const badgeTexte = estActif ? '✓ Membre actif' : '⏳ En attente de validation'
+
+  const carteClasses = 'group bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure border-t-4 border-t-anareka-vert shadow-anareka p-5 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-anareka-hov hover:border-t-anareka-or'
+
+  const iconeClasses = 'text-anareka-vert group-hover:text-anareka-or transition-colors duration-300 mb-3'
 
   const cartes = [
     {
@@ -53,35 +70,27 @@ export default async function DashboardPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-8 animate-fade-up">
-      {/* Carte bienvenue */}
       <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure border-t-4 border-t-anareka-or shadow-anareka p-8 mb-6">
         <p className="text-sm text-anareka-gris">Bienvenue,</p>
         <h2 className="font-serif text-3xl font-bold text-anareka-vert mt-1">
-          {profile?.nom_complet}
+          {membre.nom_complet}
         </h2>
         <p className="text-sm text-anareka-gris mt-2">
-          Identifiant : <span className="font-mono text-anareka-noir">{profile?.identifiant}</span>
+          Téléphone : <span className="font-mono text-anareka-noir">{membre.telephone}</span>
         </p>
-        <span
-          className={`inline-block mt-4 text-xs font-semibold uppercase tracking-wide px-4 py-1.5 rounded-full border ${
-            estActif
-              ? 'bg-anareka-vert-pale text-anareka-vert-clair border-anareka-vert-clair/30'
-              : 'bg-anareka-or-pale text-anareka-terre border-anareka-or/40'
-          }`}
-        >
-          {estActif ? '✓ Membre actif' : '⏳ En attente de validation'}
+        <span className={badgeClasses}>
+          {badgeTexte}
         </span>
       </div>
 
-      {/* Cartes de navigation */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         {cartes.map((c) => (
           <Link
             key={c.href}
             href={c.href}
-            className="group bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure border-t-4 border-t-anareka-vert shadow-anareka p-5 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-anareka-hov hover:border-t-anareka-or"
+            className={carteClasses}
           >
-            <div className="text-anareka-vert group-hover:text-anareka-or transition-colors duration-300 mb-3">
+            <div className={iconeClasses}>
               {c.icone}
             </div>
             <div className="font-semibold text-anareka-vert text-sm">{c.titre}</div>

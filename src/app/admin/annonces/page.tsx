@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
+import { estAdmin, getMembreParCompte } from "@/lib/membres"
 
 const labelCls = "block text-xs font-semibold uppercase tracking-wide text-anareka-vert mb-1.5"
 const champCls = "w-full bg-anareka-ivoire border border-anareka-bordure rounded-anareka px-4 py-2.5 text-sm text-anareka-noir focus:outline-none focus:border-anareka-or focus:ring-2 focus:ring-anareka-or/20 focus:bg-white transition"
@@ -12,9 +13,8 @@ export default async function AdminAnnoncesPage() {
   const user = auth.data.user
   if (!user) redirect("/login")
 
-  const prof = await supabase.from("profiles").select("role").eq("id", user.id).single()
-  const role = prof.data?.role
-  if (role !== "admin") redirect("/dashboard")
+  const { data: membre } = await getMembreParCompte(supabase, user.id)
+  if (!membre || !estAdmin(membre.role)) redirect("/dashboard")
 
   const res = await supabase.from("annonces").select("*").order("cree_le", { ascending: false })
   const annonces = res.data

@@ -24,59 +24,19 @@ export default async function RegisterPage({
 
         <form action={register} className="space-y-4">
           <div>
-            <label className={labelCls}>
-              Nom complet
-            </label>
-            <input
-              name="nom_complet"
-              type="text"
-              required
-              placeholder="Koné Aya Marie"
-              className={champCls}
-            />
+            <label className={labelCls}>Nom complet</label>
+            <input name="nom_complet" type="text" required placeholder="Koné Aya Marie" className={champCls} />
           </div>
           <div>
-            <label className={labelCls}>
-              Identifiant
-            </label>
-            <input
-              name="identifiant"
-              type="text"
-              required
-              placeholder="aya.kone"
-              className={champCls}
-            />
-            <p className="text-xs text-anareka-gris mt-1">Choisissez un identifiant pour vous connecter</p>
+            <label className={labelCls}>Téléphone</label>
+            <input name="telephone" type="tel" required placeholder="07 00 00 00 00" className={champCls} />
+            <p className="text-xs text-anareka-gris mt-1">Votre numéro vous servira d'identifiant</p>
           </div>
           <div>
-            <label className={labelCls}>
-              Téléphone
-            </label>
-            <input
-              name="telephone"
-              type="tel"
-              autoComplete="off"
-              placeholder="+225 07 00 00 00 00"
-              className={champCls}
-            />
+            <label className={labelCls}>Mot de passe</label>
+            <input name="password" type="password" required minLength={8} placeholder="8 caractères minimum" className={champCls} />
           </div>
-          <div>
-            <label className={labelCls}>
-              Mot de passe
-            </label>
-            <input
-              name="password"
-              type="password"
-              required
-              minLength={8}
-              placeholder="8 caractères minimum"
-              className={champCls}
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-anareka-vert text-white font-semibold text-sm uppercase tracking-wide rounded-anareka py-2.5 hover:bg-anareka-vert-clair transition-colors shadow-anareka"
-          >
+          <button type="submit" className="w-full bg-anareka-vert text-white font-semibold text-sm uppercase tracking-wide rounded-anareka py-2.5 hover:bg-anareka-vert-clair transition-colors shadow-anareka">
             Créer mon compte
           </button>
         </form>
