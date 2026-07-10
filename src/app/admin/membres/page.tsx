@@ -44,8 +44,9 @@ export default async function AdminMembresPage() {
             <thead className="bg-anareka-vert-pale text-anareka-vert text-left">
               <tr>
                 <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide">Nom</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide">Identifiant</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide">N° Membre</th>
                 <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide">Téléphone</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide">Commune</th>
                 <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide">Statut</th>
                 <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide">Actions</th>
               </tr>
@@ -63,8 +64,9 @@ export default async function AdminMembresPage() {
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs text-anareka-noir/70">{m.identifiant}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-anareka-noir/70">{m.numero_membre ?? "-"}</td>
                   <td className="px-4 py-3 text-anareka-noir/80">{m.telephone ?? "-"}</td>
+                  <td className="px-4 py-3 text-anareka-noir/80">{m.commune_quartier ?? "-"}</td>
                   <td className="px-4 py-3">
                     <span className={statutCls(m.statut)}>
                       {m.statut}

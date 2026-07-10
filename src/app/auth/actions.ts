@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { genererNumeroMembre } from '@/lib/membres'
 
 const DOMAINE = '@asso.interne'
 
@@ -35,13 +36,21 @@ export async function login(formData: FormData) {
 
 export async function register(formData: FormData) {
   const supabase = await createClient()
-  const nom_complet = formData.get('nom_complet')
+  const nom = formData.get('nom')
+  const prenoms = formData.get('prenoms')
+  const sexe = formData.get('sexe')
   const telephoneRaw = formData.get('telephone')
+  const commune_quartier = formData.get('commune_quartier')
+  const type_activite = formData.get('type_activite')
   const password = formData.get('password')
 
   if (
-    typeof nom_complet !== 'string' ||
+    typeof nom !== 'string' ||
+    typeof prenoms !== 'string' ||
+    typeof sexe !== 'string' ||
     typeof telephoneRaw !== 'string' ||
+    typeof commune_quartier !== 'string' ||
+    typeof type_activite !== 'string' ||
     typeof password !== 'string'
   ) {
     return redirect('/register?error=' + encodeURIComponent('Champs obligatoires manquants'))
@@ -57,7 +66,9 @@ export async function register(formData: FormData) {
     return redirect('/register?error=' + encodeURIComponent('Mot de passe trop court (8 min)'))
   }
 
+  const nom_complet = `${nom} ${prenoms}`.trim()
   const email = `${telephone}${DOMAINE}`
+  
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -80,12 +91,22 @@ export async function register(formData: FormData) {
   }
 
   const admin = createAdminClient()
+  
+  // Générer le numéro de membre unique
+  const numero_membre = await genererNumeroMembre(admin)
+  
   const { error: membreError } = await admin.from('membres').insert({
     compte_id: data.user.id,
     identifiant: telephone,
+    numero_membre,
+    nom,
+    prenoms,
     nom_complet,
     telephone,
     email,
+    sexe,
+    commune_quartier,
+    type_activite,
     statut: 'en_attente',
     role: 'membre',
   })
@@ -96,7 +117,7 @@ export async function register(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/dashboard')
+  redirect('/droit-inscription')
 }
 
 export async function logout() {

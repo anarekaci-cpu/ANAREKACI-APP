@@ -23,14 +23,36 @@ export default async function RegisterPage({
         )}
 
         <form action={register} className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>Nom</label>
+              <input name="nom" type="text" required placeholder="Koné" className={champCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Prénom(s)</label>
+              <input name="prenoms" type="text" required placeholder="Aya Marie" className={champCls} />
+            </div>
+          </div>
           <div>
-            <label className={labelCls}>Nom complet</label>
-            <input name="nom_complet" type="text" required placeholder="Koné Aya Marie" className={champCls} />
+            <label className={labelCls}>Sexe</label>
+            <select name="sexe" required className={champCls}>
+              <option value="">Sélectionner</option>
+              <option value="homme">Homme</option>
+              <option value="femme">Femme</option>
+            </select>
           </div>
           <div>
             <label className={labelCls}>Téléphone</label>
             <input name="telephone" type="tel" required placeholder="07 00 00 00 00" className={champCls} />
             <p className="text-xs text-anareka-gris mt-1">Votre numéro vous servira d&apos;identifiant</p>
+          </div>
+          <div>
+            <label className={labelCls}>Commune / Quartier</label>
+            <input name="commune_quartier" type="text" required placeholder="Cocody, Yopougon..." className={champCls} />
+          </div>
+          <div>
+            <label className={labelCls}>Type d&apos;activité</label>
+            <input name="type_activite" type="text" required placeholder="Vente d&apos;attiéké, commerce..." className={champCls} />
           </div>
           <div>
             <label className={labelCls}>Mot de passe</label>

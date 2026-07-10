@@ -26,10 +26,18 @@ export default async function AdminPage() {
       </header>
 
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <a href="/admin/membres" className={carteCls}>
             <div className={titreCarteCls}>Membres</div>
             <div className={descCarteCls}>Valider, suspendre, gérer les rôles</div>
+          </a>
+          <a href="/admin/droits-inscription" className={carteCls}>
+            <div className={titreCarteCls}>Droits d&apos;inscription</div>
+            <div className={descCarteCls}>Valider les paiements</div>
+          </a>
+          <a href="/admin/cotisations" className={carteCls}>
+            <div className={titreCarteCls}>Cotisations</div>
+            <div className={descCarteCls}>Gérer les paiements mensuels</div>
           </a>
           <a href="/admin/annonces" className={carteCls}>
             <div className={titreCarteCls}>Annonces</div>
@@ -38,6 +46,10 @@ export default async function AdminPage() {
           <a href="/admin/formations" className={carteCls}>
             <div className={titreCarteCls}>Formations</div>
             <div className={descCarteCls}>Créer de nouvelles formations</div>
+          </a>
+          <a href="/admin/statistiques" className={carteCls}>
+            <div className={titreCarteCls}>Statistiques</div>
+            <div className={descCarteCls}>Vue d&apos;ensemble de l&apos;association</div>
           </a>
         </div>
       </div>
