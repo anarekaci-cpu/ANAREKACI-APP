@@ -30,7 +30,7 @@ export default async function RegisterPage({
           <div>
             <label className={labelCls}>Téléphone</label>
             <input name="telephone" type="tel" required placeholder="07 00 00 00 00" className={champCls} />
-            <p className="text-xs text-anareka-gris mt-1">Votre numéro vous servira d'identifiant</p>
+            <p className="text-xs text-anareka-gris mt-1">Votre numéro vous servira d&apos;identifiant</p>
           </div>
           <div>
             <label className={labelCls}>Mot de passe</label>

@@ -9,7 +9,6 @@ const liens = [
   { href: '/dashboard', label: 'Accueil' },
   { href: '/formations', label: 'Formations' },
   { href: '/annonces', label: 'Annonces' },
-  { href: '/documents', label: 'Documents' },
 ]
 
 export default function Navbar() {

@@ -38,14 +38,14 @@ export default async function LoginPage({
 
         <p className="text-center text-sm mt-3">
           <a href="/auth/mot-de-passe-oublie" className="text-anareka-vert font-medium hover:text-anareka-or transition-colors">
-            Mot de passe oublié ?
+            Mot de passe oublié&apos;
           </a>
         </p>
 
         <p className="text-center text-sm text-anareka-gris mt-4">
           Pas encore membre ?{' '}
           <a href="/register" className="text-anareka-vert font-semibold hover:text-anareka-or transition-colors">
-            S'inscrire
+            S&apos;inscrire
           </a>
         </p>
       </div>

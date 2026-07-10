@@ -34,20 +34,9 @@ export default async function DashboardPage() {
 
   const cartes = [
     {
-      href: '/cotisations',
-      titre: 'Cotisations',
-      sous: "Payer ou voir l'historique",
-      icone: (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="2" y="5" width="20" height="14" rx="2" />
-          <line x1="2" y1="10" x2="22" y2="10" />
-        </svg>
-      ),
-    },
-    {
       href: '/annonces',
       titre: 'Annonces',
-      sous: "Actualités de l'association",
+      sous: "Actualités de l&apos;association",
       icone: (
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="m3 11 18-5v12L3 14v-3z" />
@@ -58,7 +47,7 @@ export default async function DashboardPage() {
     {
       href: '/formations',
       titre: 'Formations',
-      sous: "S'inscrire et télécharger",
+      sous: "S&apos;inscrire et télécharger",
       icone: (
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
@@ -83,7 +72,7 @@ export default async function DashboardPage() {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {cartes.map((c) => (
           <Link
             key={c.href}

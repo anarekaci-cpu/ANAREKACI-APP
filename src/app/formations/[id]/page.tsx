@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { sInscrire } from '../actions'
+import Link from 'next/link'
 
 export default async function FormationDetailPage({
   params,
@@ -45,9 +46,9 @@ export default async function FormationDetailPage({
   return (
     <main className="min-h-screen bg-anareka-ivoire">
       <div className="max-w-2xl mx-auto px-6 py-8 animate-fade-up">
-        <a href="/formations" className="text-xs font-semibold uppercase tracking-wide text-anareka-vert hover:text-anareka-or transition-colors">
+        <Link href="/formations" className="text-xs font-semibold uppercase tracking-wide text-anareka-vert hover:text-anareka-or transition-colors">
           ← Retour aux formations
-        </a>
+        </Link>
 
         <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure border-t-4 border-t-anareka-or shadow-anareka p-8 mt-6">
           <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-anareka-or">Formation</span>
