@@ -13,7 +13,6 @@ export default async function AdminStatistiquesPage() {
   }
 
   const currentYear = new Date().getFullYear()
-  const currentMonth = new Date().getMonth() + 1
 
   // Statistiques membres
   const { count: totalMembres } = await supabase
@@ -133,7 +132,7 @@ export default async function AdminStatistiquesPage() {
             </div>
             <div className={carteStatCls}>
               <p className={titreStatCls}>Mois payés</p>
-              <p className="text-3xl font-bold text-anareka-vert">{cotisationsPayes}</p>
+              <p className="text-3xl font-bold text-anareka-vert">{cotisationsPayees}</p>
             </div>
             <div className={carteStatCls}>
               <p className={titreStatCls}>Taux de paiement</p>

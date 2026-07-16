@@ -1,9 +1,15 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { changerStatut, changerRole } from "./actions"
+import { changerStatut, reinitialiserMotDePasse } from "./actions"
 import { estAdmin, getMembreParCompte } from "@/lib/membres"
+import ExportButton from "@/components/ExportButton"
 
-export default async function AdminMembresPage() {
+export default async function AdminMembresPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ recherche?: string, passwordReset?: string, passwordError?: string }>
+}) {
+  const { recherche, passwordReset, passwordError } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
@@ -13,15 +19,21 @@ export default async function AdminMembresPage() {
     redirect("/dashboard")
   }
 
-  const { data: membres } = await supabase
+  let query = supabase
     .from("membres")
     .select("*")
-    .order("cree_le", { ascending: false })
+
+  // Appliquer la recherche si fournie
+  if (recherche) {
+    const terme = recherche.trim()
+    query = query.or(`nom.ilike.%${terme}%,prenoms.ilike.%${terme}%,nom_complet.ilike.%${terme}%,telephone.ilike.%${terme}%,numero_membre.ilike.%${terme}%`)
+  }
+
+  const { data: membres } = await query.order("cree_le", { ascending: false })
 
   const btnValider = "bg-anareka-vert text-white text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-anareka hover:bg-anareka-vert-clair transition-colors"
   const btnSuspendre = "bg-red-100 text-red-700 text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-anareka hover:bg-red-200 transition-colors"
-  const btnRetirerAdmin = "bg-anareka-gris-clair text-anareka-noir text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-anareka hover:bg-anareka-bordure transition-colors"
-  const btnRendreAdmin = "bg-anareka-noir text-white text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-anareka hover:bg-anareka-vert-med transition-colors"
+  const btnResetPassword = "bg-anareka-or text-white text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-anareka hover:bg-anareka-or-clair transition-colors"
 
   const statutCls = (statut: string) => {
     if (statut === "actif") return "px-2.5 py-1 rounded-full text-xs font-semibold bg-anareka-vert-pale text-anareka-vert-clair"
@@ -39,7 +51,67 @@ export default async function AdminMembresPage() {
       </header>
 
       <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-up">
+        {/* Notification de réinitialisation */}
+        {passwordReset && (
+          <div className="bg-green-50 border border-green-200 rounded-anareka p-4 mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">✅</span>
+              <div>
+                <h3 className="font-semibold text-green-700">Mot de passe réinitialisé</h3>
+                <p className="text-sm text-green-700">{decodeURIComponent(passwordReset)}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Barre de recherche */}
+        <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-4 mb-4">
+          <form className="flex gap-3">
+            <input
+              type="text"
+              name="recherche"
+              placeholder="Rechercher par nom, téléphone ou numéro de membre..."
+              defaultValue={recherche}
+              className="flex-1 bg-anareka-ivoire border border-anareka-bordure rounded-anareka px-4 py-2 text-sm focus:outline-none focus:border-anareka-or focus:ring-2 focus:ring-anareka-or/20"
+            />
+            <button
+              type="submit"
+              className="bg-anareka-vert text-white text-xs font-semibold uppercase tracking-wide px-6 py-2 rounded-anareka hover:bg-anareka-vert-clair transition-colors"
+            >
+              Rechercher
+            </button>
+            {recherche && (
+              <a
+                href="/admin/membres"
+                className="text-xs font-semibold uppercase tracking-wide text-anareka-gris hover:text-anareka-vert transition-colors px-4 py-2"
+              >
+                Effacer
+              </a>
+            )}
+          </form>
+        </div>
+
         <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka overflow-hidden">
+          <div className="px-6 py-4 border-b border-anareka-bordure flex items-center justify-between">
+            <h2 className="font-serif text-lg font-semibold text-anareka-vert">Liste des membres</h2>
+            <ExportButton
+              data={membres?.map(m => ({
+                numero_membre: m.numero_membre,
+                nom_complet: m.nom_complet,
+                nom: m.nom,
+                prenoms: m.prenoms,
+                telephone: m.telephone,
+                sexe: m.sexe,
+                commune_quartier: m.commune_quartier,
+                type_activite: m.type_activite,
+                statut: m.statut,
+                role: m.role,
+                cree_le: m.cree_le,
+              })) || []}
+              filename="membres_anareka"
+              label="Exporter Excel"
+            />
+          </div>
           <table className="w-full text-sm">
             <thead className="bg-anareka-vert-pale text-anareka-vert text-left">
               <tr>
@@ -88,19 +160,11 @@ export default async function AdminMembresPage() {
                           </button>
                         </form>
                       )}
-                      {m.role === "admin" ? (
-                        <form action={async () => { "use server"; await changerRole(m.id, "membre") }}>
-                          <button className={btnRetirerAdmin}>
-                            Retirer admin
-                          </button>
-                        </form>
-                      ) : (
-                        <form action={async () => { "use server"; await changerRole(m.id, "admin") }}>
-                          <button className={btnRendreAdmin}>
-                            Rendre admin
-                          </button>
-                        </form>
-                      )}
+                      <form action={async () => { "use server"; await reinitialiserMotDePasse(m.id) }}>
+                        <button className={btnResetPassword}>
+                          Réinitialiser mot de passe
+                        </button>
+                      </form>
                     </div>
                   </td>
                 </tr>

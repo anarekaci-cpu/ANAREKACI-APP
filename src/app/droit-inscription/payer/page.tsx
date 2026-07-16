@@ -6,7 +6,7 @@ export default async function PayerDroitInscriptionPage({
   searchParams: Promise<{ error?: string }>
 }) {
   const { error } = await searchParams
-  const MONTANT_DROIT = 5000 // FCFA
+  const MONTANT_DROIT = 10000 // FCFA
 
   const labelCls = "block text-xs font-semibold uppercase tracking-wide text-anareka-vert mb-1.5"
   const champCls = "w-full bg-anareka-ivoire border border-anareka-bordure rounded-anareka px-4 py-2.5 text-sm text-anareka-noir focus:outline-none focus:border-anareka-or focus:ring-2 focus:ring-anareka-or/20 focus:bg-white transition"

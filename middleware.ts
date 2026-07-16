@@ -28,7 +28,7 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Routes protégées
-  const protectedPaths = ['/dashboard', '/cotisations', '/formations', '/annonces', '/admin', '/droit-inscription']
+  const protectedPaths = ['/dashboard', '/cotisations', '/formations', '/annonces', '/admin', '/droit-inscription', '/recensement']
   const isProtected = protectedPaths.some(p => pathname.startsWith(p))
   if (isProtected && !user) {
     return NextResponse.redirect(new URL('/login', request.url))

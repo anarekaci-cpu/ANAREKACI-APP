@@ -1,67 +1,125 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
+import { createCinetPayConfig, initierPaiement } from '@/lib/cinetpay'
 
 const MOIS_NOMS = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
 ]
 
-export default async function CotisationsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
-    redirect('/login')
+export default function CotisationsPage() {
+  const router = useRouter()
+  const [membre, setMembre] = useState<any>(null)
+  const [droit, setDroit] = useState<any>(null)
+  const [cotisations, setCotisations] = useState<any[]>([])
+  const [loadingPaiement, setLoadingPaiement] = useState<string | null>(null)
+  const [message, setMessage] = useState('')
+  const [chargement, setChargement] = useState(true)
+
+  useEffect(() => {
+    async function chargerDonnees() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        router.push('/login')
+        return
+      }
+
+      const { data: membreData } = await supabase
+        .from('membres')
+        .select('*')
+        .eq('compte_id', user.id)
+        .single()
+
+      if (!membreData) {
+        router.push('/attente-validation')
+        return
+      }
+      setMembre(membreData)
+
+      const { data: droitData } = await supabase
+        .from('droits_inscription')
+        .select('*')
+        .eq('membre_id', membreData.id)
+        .single()
+      setDroit(droitData)
+
+      if (droitData?.statut !== 'paye') {
+        router.push('/droit-inscription')
+        return
+      }
+
+      const currentYear = new Date().getFullYear()
+      const { data: cotisationsData } = await supabase
+        .from('cotisations')
+        .select('*')
+        .eq('membre_id', membreData.id)
+        .eq('annee', currentYear)
+        .order('mois', { ascending: true })
+      setCotisations(cotisationsData || [])
+      setChargement(false)
+    }
+
+    chargerDonnees()
+  }, [router])
+
+  const handlePaiementTest = async (mois: number) => {
+    setLoadingPaiement(`mois-${mois}`)
+    setMessage('')
+
+    const config = createCinetPayConfig(window.location.origin)
+    const transactionId = `cot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+    const result = await initierPaiement(config, {
+      transactionId,
+      amount: 1000,
+      customerName: membre?.nom_complet || 'Membre',
+      customerPhone: membre?.telephone || '',
+      description: `Cotisation ${MOIS_NOMS[mois - 1]} 2025`,
+      metadata: { membre_id: membre?.id, mois, annee: 2025, type: 'cotisation' }
+    })
+
+    setLoadingPaiement(null)
+
+    if (result.success && result.paymentUrl) {
+      // Enregistrer le paiement en attente dans la base
+      const supabase = createClient()
+      await supabase.from('paiements').insert({
+        membre_id: membre.id,
+        type: 'cotisation',
+        montant: 1000,
+        methode: 'mobile_money',
+        reference: transactionId,
+        statut: 'en_attente',
+        date_paiement: new Date().toISOString()
+      })
+
+      window.location.href = result.paymentUrl
+    } else {
+      setMessage(result.message || 'Erreur lors du paiement')
+    }
   }
 
-  const { data: membre } = await supabase
-    .from('membres')
-    .select('*')
-    .eq('compte_id', user.id)
-    .single()
-
-  if (!membre) {
-    redirect('/attente-validation')
-  }
-
-  // Vérifier le droit d'inscription
-  const { data: droit } = await supabase
-    .from('droits_inscription')
-    .select('*')
-    .eq('membre_id', membre.id)
-    .single()
-
-  if (droit?.statut !== 'paye') {
-    redirect('/droit-inscription')
+  if (chargement) {
+    return (
+      <main className="min-h-screen bg-anareka-ivoire flex items-center justify-center">
+        <p className="text-anareka-gris">Chargement...</p>
+      </main>
+    )
   }
 
   const currentYear = new Date().getFullYear()
   const currentMonth = new Date().getMonth() + 1
-
-  // Récupérer les cotisations de l'année courante
-  const { data: cotisations } = await supabase
-    .from('cotisations')
-    .select('*')
-    .eq('membre_id', membre.id)
-    .eq('annee', currentYear)
-    .order('mois', { ascending: true })
-
-  // Calculer les statistiques
-  const moisPayes = cotisations?.filter(c => c.statut === 'paye').length || 0
-  const moisNonPayes = cotisations?.filter(c => c.statut === 'non_paye').length || 0
-  const totalVerse = cotisations?.reduce((sum, c) => sum + (c.statut === 'paye' ? c.montant : 0), 0) || 0
-  const montantMensuel = 1000 // FCFA
-
-  // Identifier les mois en retard (mois passés non payés)
-  const moisEnRetard = cotisations?.filter(c => 
-    c.statut === 'non_paye' && c.mois < currentMonth
-  ) || []
-
-  // Identifier les mois à venir (mois futurs non payés)
-  const moisAVenir = cotisations?.filter(c => 
-    c.statut === 'non_paye' && c.mois >= currentMonth
-  ) || []
+  const moisPayes = cotisations.filter(c => c.statut === 'paye').length
+  const moisNonPayes = cotisations.filter(c => c.statut === 'non_paye').length
+  const totalVerse = cotisations.reduce((sum, c) => sum + (c.statut === 'paye' ? c.montant : 0), 0)
+  const montantMensuel = 1000
+  const moisEnRetard = cotisations.filter(c => c.statut === 'non_paye' && c.mois < currentMonth)
 
   return (
     <main className="min-h-screen bg-anareka-ivoire">
@@ -90,7 +148,14 @@ export default async function CotisationsPage() {
           </div>
         </div>
 
-        {/* Alertes */}
+        {/* Alerte test CinetPay */}
+        {message && (
+          <div className="bg-red-50 border border-red-200 rounded-anareka p-4 mb-6">
+            <p className="text-sm text-red-700">{message}</p>
+          </div>
+        )}
+
+        {/* Alertes retard */}
         {moisEnRetard.length > 0 && (
           <div className="bg-red-50 border border-red-200 rounded-anareka p-4 mb-6">
             <div className="flex items-center gap-2 mb-2">
@@ -110,10 +175,11 @@ export default async function CotisationsPage() {
           </div>
           
           <div className="divide-y divide-anareka-bordure">
-            {cotisations?.map((cotisation) => {
+            {cotisations.map((cotisation) => {
               const isPast = cotisation.mois < currentMonth
               const isCurrent = cotisation.mois === currentMonth
               const isFuture = cotisation.mois > currentMonth
+              const isLoadingThis = loadingPaiement === `mois-${cotisation.mois}`
               
               return (
                 <div key={cotisation.id} className="px-6 py-4 flex items-center justify-between hover:bg-anareka-ivoire transition-colors">
@@ -144,12 +210,13 @@ export default async function CotisationsPage() {
                         )}
                       </div>
                     ) : (
-                      <Link
-                        href={`/cotisations/payer?mois=${cotisation.mois}`}
-                        className="text-xs font-semibold uppercase tracking-wide bg-anareka-vert text-white px-4 py-2 rounded-anareka hover:bg-anareka-vert-clair transition-colors"
+                      <button
+                        onClick={() => handlePaiementTest(cotisation.mois)}
+                        disabled={isLoadingThis}
+                        className="text-xs font-semibold uppercase tracking-wide bg-anareka-vert text-white px-4 py-2 rounded-anareka hover:bg-anareka-vert-clair transition-colors disabled:opacity-50"
                       >
-                        Payer ({montantMensuel.toLocaleString('fr-FR')} F)
-                      </Link>
+                        {isLoadingThis ? 'Redirection...' : `Payer (${montantMensuel.toLocaleString('fr-FR')} F)`}
+                      </button>
                     )}
                   </div>
                 </div>

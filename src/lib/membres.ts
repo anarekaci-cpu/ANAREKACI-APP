@@ -14,7 +14,7 @@ export type Membre = {
   commune_quartier: string | null
   type_activite: string | null
   statut: 'actif' | 'en_attente' | 'suspendu'
-  role: 'membre' | 'admin' | 'bureau' | 'tresorier'
+  role: 'membre' | 'admin' | 'bureau'
   cree_le: string | null
 }
 
@@ -55,7 +55,7 @@ export type Paiement = {
   cree_le: string
 }
 
-const ROLES_ADMIN = new Set(['admin', 'bureau', 'tresorier'])
+const ROLES_ADMIN = new Set(['admin', 'bureau'])
 
 export function estAdmin(role: string | undefined | null) {
   return !!role && ROLES_ADMIN.has(role)

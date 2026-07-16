@@ -47,6 +47,18 @@ export default async function AdminPage() {
             <div className={titreCarteCls}>Formations</div>
             <div className={descCarteCls}>Créer de nouvelles formations</div>
           </a>
+          <a href="/admin/evenements" className={carteCls}>
+            <div className={titreCarteCls}>Événements</div>
+            <div className={descCarteCls}>Gérer les événements</div>
+          </a>
+          <a href="/admin/roles" className={carteCls}>
+            <div className={titreCarteCls}>Rôles</div>
+            <div className={descCarteCls}>Gérer les rôles des membres</div>
+          </a>
+          <a href="/admin/rapports" className={carteCls}>
+            <div className={titreCarteCls}>Rapports</div>
+            <div className={descCarteCls}>Rapports financiers détaillés</div>
+          </a>
           <a href="/admin/statistiques" className={carteCls}>
             <div className={titreCarteCls}>Statistiques</div>
             <div className={descCarteCls}>Vue d&apos;ensemble de l&apos;association</div>

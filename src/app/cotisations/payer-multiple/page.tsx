@@ -31,7 +31,6 @@ export default async function PayerCotisationsMultiplesPage({
   }
 
   const currentYear = new Date().getFullYear()
-  const currentMonth = new Date().getMonth() + 1
 
   // Récupérer les cotisations non payées
   const { data: cotisations } = await supabase

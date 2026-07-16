@@ -30,6 +30,21 @@ export async function login(formData: FormData) {
     return redirect('/login?error=Telephone+ou+mot+de+passe+incorrect')
   }
 
+  // Vérifier si l'utilisateur est admin
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    const { data: membre } = await supabase
+      .from('membres')
+      .select('role')
+      .eq('compte_id', user.id)
+      .single()
+    
+    if (membre && membre.role === 'admin') {
+      revalidatePath('/', 'layout')
+      redirect('/admin')
+    }
+  }
+
   revalidatePath('/', 'layout')
   redirect('/dashboard')
 }

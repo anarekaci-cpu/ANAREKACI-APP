@@ -7,8 +7,13 @@ import { logout } from '@/app/auth/actions'
 
 const liens = [
   { href: '/dashboard', label: 'Accueil' },
+  { href: '/profil', label: 'Mon Profil' },
+  { href: '/cotisations', label: 'Cotisations' },
+  { href: '/paiements', label: 'Paiements' },
   { href: '/formations', label: 'Formations' },
   { href: '/annonces', label: 'Annonces' },
+  { href: '/messages', label: 'Messages' },
+  { href: '/notifications', label: 'Notifications' },
 ]
 
 export default function Navbar() {

@@ -3,6 +3,22 @@ import { redirect } from 'next/navigation'
 import { estAdmin, getMembreParCompte } from '@/lib/membres'
 import { validerDroitInscription, refuserDroitInscription } from './actions'
 
+type DroitWithMembre = {
+  id: string
+  statut: string
+  montant: number
+  cree_le: string
+  motif_refus: string | null
+  membre: {
+    id: string
+    nom: string
+    prenoms: string | null
+    nom_complet: string
+    telephone: string | null
+    numero_membre: string | null
+  }
+}
+
 export default async function AdminDroitsInscriptionPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -53,7 +69,7 @@ export default async function AdminDroitsInscriptionPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {droits?.map((droit: any) => (
+            {droits?.map((droit: DroitWithMembre) => (
               <div key={droit.id} className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-6">
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div>
