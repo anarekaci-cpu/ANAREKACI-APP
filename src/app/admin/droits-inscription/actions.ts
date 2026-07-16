@@ -21,7 +21,6 @@ export async function validerDroitInscription(droitId: string, membreId: string)
   
   const { supabase, adminId } = result
 
-  // Mettre à jour le droit d'inscription
   const { error: droitError } = await supabase
     .from('droits_inscription')
     .update({
@@ -34,7 +33,6 @@ export async function validerDroitInscription(droitId: string, membreId: string)
 
   if (droitError) return { error: droitError.message }
 
-  // Mettre à jour le statut du membre
   const { error: membreError } = await supabase
     .from('membres')
     .update({ statut: 'actif' })

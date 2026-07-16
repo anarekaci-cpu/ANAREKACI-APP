@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+const MONTANT_COTISATION_MENSUELLE = 1000 // FCFA — fixé côté serveur
+
 export async function payerCotisation(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -25,25 +27,27 @@ export async function payerCotisation(formData: FormData) {
 
   const mois = parseInt(formData.get('mois') as string)
   const annee = parseInt(formData.get('annee') as string)
-  const montant = parseInt(formData.get('montant') as string)
   const methode = formData.get('methode') as string
-  const reference = formData.get('reference') as string | null
+  const referenceUtilisateur = formData.get('reference') as string | null
 
-  if (!mois || !annee || !montant || !methode) {
+  if (!mois || !annee || !methode) {
     return redirect('/cotisations/payer?error=Champs+manquants')
   }
 
   const admin = createAdminClient()
 
-  // Créer l'enregistrement de paiement
+  // On encode le(s) mois et l'année dans "reference" pour que l'admin
+  // sache exactement quelle cotisation valider plus tard.
+  const referenceComplete = `mois=${mois};annee=${annee};ref=${referenceUtilisateur || ''}`
+
   const { error: paiementError } = await admin
     .from('paiements')
     .insert({
       membre_id: membre.id,
       type: 'cotisation',
-      montant,
+      montant: MONTANT_COTISATION_MENSUELLE,
       methode,
-      reference,
+      reference: referenceComplete,
       statut: 'en_attente',
       date_paiement: new Date().toISOString(),
     })
@@ -53,41 +57,8 @@ export async function payerCotisation(formData: FormData) {
     return redirect('/cotisations/payer?error=Erreur+enregistrement')
   }
 
-  // Mettre à jour la cotisation
-  const { error: cotisationError } = await admin
-    .from('cotisations')
-    .update({
-      statut: 'paye',
-      date_paiement: new Date().toISOString(),
-    })
-    .eq('membre_id', membre.id)
-    .eq('annee', annee)
-    .eq('mois', mois)
-
-  if (cotisationError) {
-    console.error('Erreur mise à jour cotisation:', cotisationError)
-    return redirect('/cotisations/payer?error=Erreur+mise+à+jour')
-  }
-
-  // Valider automatiquement le paiement
-  const { error: validationError } = await admin
-    .from('paiements')
-    .update({
-      statut: 'valide',
-      date_validation: new Date().toISOString(),
-      valide_par: membre.id,
-    })
-    .eq('membre_id', membre.id)
-    .eq('type', 'cotisation')
-    .order('cree_le', { ascending: false })
-    .limit(1)
-
-  if (validationError) {
-    console.error('Erreur validation paiement:', validationError)
-  }
-
   revalidatePath('/cotisations')
-  redirect('/cotisations?success=Paiement+réussi')
+  redirect('/cotisations?success=Déclaration+enregistrée,+en+attente+de+validation+par+un+admin')
 }
 
 export async function payerCotisationsMultiples(formData: FormData) {
@@ -111,17 +82,18 @@ export async function payerCotisationsMultiples(formData: FormData) {
   const moisSelectionnes = formData.getAll('mois') as string[]
   const annee = parseInt(formData.get('annee') as string)
   const methode = formData.get('methode') as string
-  const reference = formData.get('reference') as string | null
+  const referenceUtilisateur = formData.get('reference') as string | null
 
   if (!moisSelectionnes.length || !annee || !methode) {
     return redirect('/cotisations/payer-multiple?error=Champs+manquants')
   }
 
   const admin = createAdminClient()
-  const montantParMois = 1000
-  const montantTotal = moisSelectionnes.length * montantParMois
+  const montantTotal = moisSelectionnes.length * MONTANT_COTISATION_MENSUELLE
 
-  // Créer un paiement global
+  // Même format que ci-dessus, avec plusieurs mois séparés par des virgules.
+  const referenceComplete = `mois=${moisSelectionnes.join(',')};annee=${annee};ref=${referenceUtilisateur || ''}`
+
   const { error: paiementError } = await admin
     .from('paiements')
     .insert({
@@ -129,7 +101,7 @@ export async function payerCotisationsMultiples(formData: FormData) {
       type: 'cotisation',
       montant: montantTotal,
       methode,
-      reference,
+      reference: referenceComplete,
       statut: 'en_attente',
       date_paiement: new Date().toISOString(),
     })
@@ -139,39 +111,6 @@ export async function payerCotisationsMultiples(formData: FormData) {
     return redirect('/cotisations/payer-multiple?error=Erreur+enregistrement')
   }
 
-  // Mettre à jour toutes les cotisations sélectionnées
-  const { error: cotisationError } = await admin
-    .from('cotisations')
-    .update({
-      statut: 'paye',
-      date_paiement: new Date().toISOString(),
-    })
-    .eq('membre_id', membre.id)
-    .eq('annee', annee)
-    .in('mois', moisSelectionnes.map(Number))
-
-  if (cotisationError) {
-    console.error('Erreur mise à jour cotisations:', cotisationError)
-    return redirect('/cotisations/payer-multiple?error=Erreur+mise+à+jour')
-  }
-
-  // Valider automatiquement le paiement
-  const { error: validationError } = await admin
-    .from('paiements')
-    .update({
-      statut: 'valide',
-      date_validation: new Date().toISOString(),
-      valide_par: membre.id,
-    })
-    .eq('membre_id', membre.id)
-    .eq('type', 'cotisation')
-    .order('cree_le', { ascending: false })
-    .limit(1)
-
-  if (validationError) {
-    console.error('Erreur validation paiement:', validationError)
-  }
-
   revalidatePath('/cotisations')
-  redirect('/cotisations?success=Paiements+réussis')
+  redirect('/cotisations?success=Déclaration+enregistrée,+en+attente+de+validation+par+un+admin')
 }

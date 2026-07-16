@@ -39,6 +39,10 @@ export default async function AdminPage() {
             <div className={titreCarteCls}>Cotisations</div>
             <div className={descCarteCls}>Gérer les paiements mensuels</div>
           </a>
+          <a href="/admin/paiements-cotisations" className={carteCls}>
+            <div className={titreCarteCls}>Paiements en attente</div>
+            <div className={descCarteCls}>Valider les cotisations déclarées par les membres</div>
+          </a>
           <a href="/admin/annonces" className={carteCls}>
             <div className={titreCarteCls}>Annonces</div>
             <div className={descCarteCls}>Créer et publier des annonces</div>
