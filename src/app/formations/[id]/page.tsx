@@ -1,179 +1,88 @@
-import { cookies } from "next/headers"
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
-import { changerStatut, reinitialiserMotDePasse } from "./actions"
-import { estAdmin, getMembreParCompte } from "@/lib/membres"
-import ExportButton from "@/components/ExportButton"
-import PasswordResetBanner from "@/components/PasswordResetBanner"
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 
-export default async function AdminMembresPage({
-  searchParams,
+export default async function FormationDetailPage({
+  params,
 }: {
-  searchParams: Promise<{ recherche?: string, passwordError?: string }>
+  params: Promise<{ id: string }>
 }) {
-  const { recherche, passwordError } = await searchParams
+  const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/login")
-
-  const { data: monProfil } = await getMembreParCompte(supabase, user.id)
-  if (!monProfil || !estAdmin(monProfil.role)) {
-    redirect("/dashboard")
+  
+  if (!user) {
+    redirect('/login')
   }
 
-  // Lecture unique du cookie httpOnly posé par reinitialiserMotDePasse().
-  // Le composant client PasswordResetBanner le fait détruire dès l'affichage.
-  const jar = await cookies()
-  const rawReset = jar.get("anareka_password_reset")?.value
-  const passwordReset = rawReset
-    ? (JSON.parse(rawReset) as { nom: string; motDePasse: string })
-    : null
+  const { data: formation } = await supabase
+    .from('formations')
+    .select('*')
+    .eq('id', id)
+    .single()
 
-  let query = supabase
-    .from("membres")
-    .select("*")
-
-  // Appliquer la recherche si fournie
-  if (recherche) {
-    const terme = recherche.trim()
-    query = query.or(`nom.ilike.%${terme}%,prenoms.ilike.%${terme}%,nom_complet.ilike.%${terme}%,telephone.ilike.%${terme}%,numero_membre.ilike.%${terme}%`)
-  }
-
-  const { data: membres } = await query.order("cree_le", { ascending: false })
-
-  const btnValider = "bg-anareka-vert text-white text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-anareka hover:bg-anareka-vert-clair transition-colors"
-  const btnSuspendre = "bg-red-100 text-red-700 text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-anareka hover:bg-red-200 transition-colors"
-  const btnResetPassword = "bg-anareka-or text-white text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-anareka hover:bg-anareka-or-clair transition-colors"
-
-  const statutCls = (statut: string) => {
-    if (statut === "actif") return "px-2.5 py-1 rounded-full text-xs font-semibold bg-anareka-vert-pale text-anareka-vert-clair"
-    if (statut === "suspendu") return "px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700"
-    return "px-2.5 py-1 rounded-full text-xs font-semibold bg-anareka-or-pale text-anareka-terre"
+  if (!formation) {
+    redirect('/formations')
   }
 
   return (
     <main className="min-h-screen bg-anareka-ivoire">
-      <header className="bg-anareka-noir text-white border-b-2 border-anareka-or">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="font-serif text-xl font-bold">Gestion des membres</h1>
-          <a href="/admin" className="text-xs uppercase tracking-wide text-anareka-or-clair hover:text-anareka-or transition-colors">Retour admin</a>
+      <header className="bg-anareka-vert border-b border-anareka-or/25">
+        <div className="max-w-3xl mx-auto px-6 py-6">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-anareka-or">Formations</span>
+          <h1 className="font-serif text-3xl font-bold text-white mt-1">{formation.titre}</h1>
+          <div className="w-12 h-0.5 bg-anareka-or mt-3" />
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-up">
-        {/* Notification de réinitialisation (cookie httpOnly, une seule fois) */}
-        {passwordReset && (
-          <PasswordResetBanner nom={passwordReset.nom} motDePasse={passwordReset.motDePasse} />
-        )}
+      <div className="max-w-3xl mx-auto px-4 py-8 animate-fade-up">
+        <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-6">
+          {formation.description && (
+            <div className="mb-6">
+              <h2 className="font-serif text-lg font-semibold text-anareka-vert mb-2">Description</h2>
+              <p className="text-sm text-anareka-noir/80">{formation.description}</p>
+            </div>
+          )}
+          
+          {formation.date && (
+            <div className="mb-4">
+              <h2 className="font-serif text-lg font-semibold text-anareka-vert mb-2">Date</h2>
+              <p className="text-sm text-anareka-noir/80">
+                {new Date(formation.date).toLocaleDateString('fr-FR', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric'
+                })}
+              </p>
+            </div>
+          )}
 
-        {/* Barre de recherche */}
-        <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-4 mb-4">
-          <form className="flex gap-3">
-            <input
-              type="text"
-              name="recherche"
-              placeholder="Rechercher par nom, téléphone ou numéro de membre..."
-              defaultValue={recherche}
-              className="flex-1 bg-anareka-ivoire border border-anareka-bordure rounded-anareka px-4 py-2 text-sm focus:outline-none focus:border-anareka-or focus:ring-2 focus:ring-anareka-or/20"
-            />
-            <button
-              type="submit"
-              className="bg-anareka-vert text-white text-xs font-semibold uppercase tracking-wide px-6 py-2 rounded-anareka hover:bg-anareka-vert-clair transition-colors"
-            >
-              Rechercher
-            </button>
-            {recherche && (
+          {formation.lieu && (
+            <div className="mb-4">
+              <h2 className="font-serif text-lg font-semibold text-anareka-vert mb-2">Lieu</h2>
+              <p className="text-sm text-anareka-noir/80">{formation.lieu}</p>
+            </div>
+          )}
+
+          {formation.fichier_url && (
+            <div className="mt-6 pt-6 border-t border-anareka-bordure">
               <a
-                href="/admin/membres"
-                className="text-xs font-semibold uppercase tracking-wide text-anareka-gris hover:text-anareka-vert transition-colors px-4 py-2"
+                href={formation.fichier_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-anareka-or text-white font-semibold text-sm uppercase tracking-wide px-6 py-2.5 rounded-anareka hover:bg-anareka-or-clair transition-colors"
               >
-                Effacer
+                Télécharger le document
               </a>
-            )}
-          </form>
+            </div>
+          )}
         </div>
 
-        <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka overflow-hidden">
-          <div className="px-6 py-4 border-b border-anareka-bordure flex items-center justify-between">
-            <h2 className="font-serif text-lg font-semibold text-anareka-vert">Liste des membres</h2>
-            <ExportButton
-              data={membres?.map(m => ({
-                numero_membre: m.numero_membre,
-                nom_complet: m.nom_complet,
-                nom: m.nom,
-                prenoms: m.prenoms,
-                telephone: m.telephone,
-                sexe: m.sexe,
-                commune_quartier: m.commune_quartier,
-                type_activite: m.type_activite,
-                statut: m.statut,
-                role: m.role,
-                cree_le: m.cree_le,
-              })) || []}
-              filename="membres_anareka"
-              label="Exporter Excel"
-            />
-          </div>
-          <table className="w-full text-sm">
-            <thead className="bg-anareka-vert-pale text-anareka-vert text-left">
-              <tr>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide">Nom</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide">N° Membre</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide">Téléphone</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide">Commune</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide">Statut</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-anareka-bordure">
-              {membres?.map((m) => (
-                <tr key={m.id} className="hover:bg-anareka-ivoire transition-colors">
-                  <td className="px-4 py-3 font-medium text-anareka-noir">
-                    <div className="flex items-center gap-2">
-                      {m.nom_complet}
-                      {m.role === "admin" && (
-                        <span className="bg-anareka-or-pale text-anareka-terre text-xs font-semibold px-2 py-0.5 rounded-full border border-anareka-or/40">
-                          Admin
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs text-anareka-noir/70">{m.numero_membre ?? "-"}</td>
-                  <td className="px-4 py-3 text-anareka-noir/80">{m.telephone ?? "-"}</td>
-                  <td className="px-4 py-3 text-anareka-noir/80">{m.commune_quartier ?? "-"}</td>
-                  <td className="px-4 py-3">
-                    <span className={statutCls(m.statut)}>
-                      {m.statut}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2 flex-wrap">
-                      {m.statut !== "actif" && (
-                        <form action={async () => { "use server"; await changerStatut(m.id, "actif") }}>
-                          <button className={btnValider}>
-                            Valider
-                          </button>
-                        </form>
-                      )}
-                      {m.statut !== "suspendu" && (
-                        <form action={async () => { "use server"; await changerStatut(m.id, "suspendu") }}>
-                          <button className={btnSuspendre}>
-                            Suspendre
-                          </button>
-                        </form>
-                      )}
-                      <form action={async () => { "use server"; await reinitialiserMotDePasse(m.id) }}>
-                        <button className={btnResetPassword}>
-                          Réinitialiser mot de passe
-                        </button>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <a
+          href="/formations"
+          className="inline-block mt-6 text-sm font-semibold text-anareka-vert hover:text-anareka-or transition-colors"
+        >
+          ← Retour aux formations
+        </a>
       </div>
     </main>
   )

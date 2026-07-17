@@ -81,6 +81,18 @@ export async function register(formData: FormData) {
     return redirect('/register?error=' + encodeURIComponent('Mot de passe trop court (8 min)'))
   }
 
+  // Vérifier si le numéro de téléphone existe déjà
+  const admin = createAdminClient()
+  const { data: existingMembre } = await admin
+    .from('membres')
+    .select('id')
+    .eq('telephone', telephone)
+    .single()
+
+  if (existingMembre) {
+    return redirect('/register?error=' + encodeURIComponent('Ce numéro de téléphone est déjà utilisé. Connectez-vous ou contactez le bureau.'))
+  }
+
   const nom_complet = `${nom} ${prenoms}`.trim()
   const email = `${telephone}${DOMAINE}`
   
@@ -98,14 +110,16 @@ export async function register(formData: FormData) {
 
   if (error) {
     console.error('ERREUR SIGNUP:', JSON.stringify(error))
+    // Si l'erreur est "User already registered", c'est que le compte auth existe mais pas la fiche membre
+    if (error.message === 'User already registered') {
+      return redirect('/register?error=' + encodeURIComponent('Un compte existe déjà avec ce numéro. Connectez-vous.'))
+    }
     return redirect('/register?error=' + encodeURIComponent(error.message || JSON.stringify(error)))
   }
 
   if (!data.user) {
     return redirect('/register?error=' + encodeURIComponent('Compte créé mais session introuvable. Connectez-vous.'))
   }
-
-  const admin = createAdminClient()
   
   // Générer le numéro de membre unique
   const numero_membre = await genererNumeroMembre(admin)

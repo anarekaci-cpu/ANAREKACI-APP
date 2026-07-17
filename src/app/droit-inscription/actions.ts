@@ -38,7 +38,8 @@ export async function declarerPaiementExterne() {
   }
 
   revalidatePath('/droit-inscription')
-  redirect('/droit-inscription')
+  revalidatePath('/dashboard')
+  redirect('/dashboard?success=Déclaration+de+paiement+enregistrée')
 }
 
 export async function enregistrerPaiementDroitInscription(formData: FormData) {

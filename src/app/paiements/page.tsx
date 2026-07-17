@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import RecuButton from '@/components/RecuButton'
 
 const MOIS_NOMS = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -100,9 +101,11 @@ export default async function PaiementsPage() {
                 )}
               </div>
               {droitInscription.statut === 'paye' && (
-                <button className="text-xs font-semibold uppercase tracking-wide bg-anareka-vert text-white px-4 py-2 rounded-anareka hover:bg-anareka-vert-clair transition-colors">
-                  Télécharger reçu
-                </button>
+                <RecuButton
+                  type="droit"
+                  data={{ ...droitInscription, nom_complet: membre.nom_complet, numero_membre: membre.numero_membre }}
+                  label="Télécharger reçu"
+                />
               )}
             </div>
           ) : (
@@ -136,9 +139,11 @@ export default async function PaiementsPage() {
                       {cotisation.montant.toLocaleString('fr-FR')} FCFA
                     </span>
                     {cotisation.statut === 'paye' && (
-                      <button className="text-xs font-semibold uppercase tracking-wide bg-anareka-or text-white px-3 py-1.5 rounded-anareka hover:bg-anareka-or-clair transition-colors">
-                        Reçu
-                      </button>
+                      <RecuButton
+                        type="cotisation"
+                        data={{ ...cotisation, nom_complet: membre.nom_complet, numero_membre: membre.numero_membre }}
+                        label="Reçu"
+                      />
                     )}
                   </div>
                 </div>
@@ -173,9 +178,11 @@ export default async function PaiementsPage() {
                       {paiement.montant.toLocaleString('fr-FR')} FCFA
                     </span>
                     {paiement.statut === 'paye' && (
-                      <button className="text-xs font-semibold uppercase tracking-wide bg-anareka-or text-white px-3 py-1.5 rounded-anareka hover:bg-anareka-or-clair transition-colors">
-                        Reçu
-                      </button>
+                      <RecuButton
+                        type="autre"
+                        data={{ ...paiement, nom_complet: membre.nom_complet, numero_membre: membre.numero_membre }}
+                        label="Reçu"
+                      />
                     )}
                   </div>
                 </div>

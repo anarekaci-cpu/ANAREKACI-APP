@@ -5,15 +5,11 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { logout } from '@/app/auth/actions'
 
-const liens = [
-  { href: '/dashboard', label: 'Accueil' },
-  { href: '/profil', label: 'Mon Profil' },
-  { href: '/cotisations', label: 'Cotisations' },
-  { href: '/paiements', label: 'Paiements' },
-  { href: '/formations', label: 'Formations' },
-  { href: '/annonces', label: 'Annonces' },
-  { href: '/messages', label: 'Messages' },
-  { href: '/notifications', label: 'Notifications' },
+const sections = [
+  { href: '/dashboard', label: 'Tableau de bord', icone: '🏠' },
+  { href: '/cotisations', label: 'Cotisations', icone: '💰' },
+  { href: '/formations', label: 'Formations', icone: '📚' },
+  { href: '/messages', label: 'Messages', icone: '✉️' },
 ]
 
 export default function Navbar() {
@@ -44,18 +40,19 @@ export default function Navbar() {
           </span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-1">
-          {liens.map((l) => (
+        <div className="hidden md:flex items-center gap-2">
+          {sections.map((section) => (
             <Link
-              key={l.href}
-              href={l.href}
-              className={`relative px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors duration-200 after:content-[''] after:absolute after:left-3 after:right-3 after:bottom-1 after:h-0.5 after:bg-anareka-or after:origin-left after:transition-transform after:duration-300 ${lienActif(l.href) ? 'text-anareka-vert after:scale-x-100' : 'text-anareka-noir hover:text-anareka-vert after:scale-x-0 hover:after:scale-x-100'}`}
+              key={section.href}
+              href={section.href}
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold uppercase tracking-wide transition-colors duration-200 rounded-anareka ${lienActif(section.href) ? 'bg-anareka-vert-pale text-anareka-vert' : 'text-anareka-noir hover:bg-anareka-vert-pale hover:text-anareka-vert'}`}
             >
-              {l.label}
+              <span className="text-lg">{section.icone}</span>
+              <span>{section.label}</span>
             </Link>
           ))}
           <form action={logout} className="ml-3">
-            <button className="text-xs font-semibold uppercase tracking-wide text-anareka-terre border border-anareka-or/50 px-3 py-1.5 rounded-anareka hover:bg-anareka-or hover:text-anareka-noir hover:border-anareka-or transition-colors duration-200">
+            <button className="text-xs font-semibold uppercase tracking-wide text-anareka-terre border border-anareka-or/50 px-3 py-2 rounded-anareka hover:bg-anareka-or hover:text-anareka-noir hover:border-anareka-or transition-colors duration-200">
               Déconnexion
             </button>
           </form>
@@ -74,19 +71,20 @@ export default function Navbar() {
       </div>
 
       {menuOuvert && (
-        <div className="md:hidden bg-anareka-ivoire border-t border-anareka-or/20 px-6 pb-4 pt-2 flex flex-col gap-1 animate-fade-up">
-          {liens.map((l) => (
+        <div className="md:hidden bg-anareka-ivoire border-t border-anareka-or/20 px-4 pb-4 pt-4 flex flex-col gap-2 animate-fade-up">
+          {sections.map((section) => (
             <Link
-              key={l.href}
-              href={l.href}
+              key={section.href}
+              href={section.href}
               onClick={() => setMenuOuvert(false)}
-              className={`px-3 py-2.5 rounded-anareka text-xs font-semibold uppercase tracking-wide transition-colors duration-200 ${lienActif(l.href) ? 'bg-anareka-vert-pale text-anareka-vert' : 'text-anareka-noir hover:bg-anareka-vert-pale hover:text-anareka-vert'}`}
+              className={`flex items-center gap-3 px-4 py-4 rounded-anareka text-base font-semibold uppercase tracking-wide transition-colors duration-200 ${lienActif(section.href) ? 'bg-anareka-vert-pale text-anareka-vert' : 'text-anareka-noir hover:bg-anareka-vert-pale hover:text-anareka-vert'}`}
             >
-              {l.label}
+              <span className="text-2xl">{section.icone}</span>
+              <span>{section.label}</span>
             </Link>
           ))}
-          <form action={logout} className="mt-1">
-            <button className="w-full text-left px-3 py-2.5 rounded-anareka text-xs font-semibold uppercase tracking-wide text-anareka-terre hover:bg-anareka-vert-pale transition-colors duration-200">
+          <form action={logout} className="mt-2">
+            <button className="w-full text-left px-4 py-4 rounded-anareka text-sm font-semibold uppercase tracking-wide text-anareka-terre hover:bg-anareka-vert-pale transition-colors duration-200">
               Déconnexion
             </button>
           </form>

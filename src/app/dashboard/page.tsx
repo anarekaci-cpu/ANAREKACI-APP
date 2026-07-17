@@ -27,8 +27,8 @@ export default async function DashboardPage() {
     .eq('membre_id', membre.id)
     .single()
 
-  // Si le droit n'est pas payé, rediriger vers la page de paiement
-  if (!droit || droit.statut !== 'paye') {
+  // Si le droit n'existe pas ou n'est ni payé ni en attente de validation, rediriger vers la page de paiement
+  if (!droit || (droit.statut !== 'paye' && droit.statut !== 'en_attente_validation')) {
     redirect('/droit-inscription')
   }
 
