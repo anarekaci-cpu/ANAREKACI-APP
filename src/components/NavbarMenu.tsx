@@ -94,7 +94,7 @@ export default function NavbarMenu({ liens, nom }: { liens: LienNav[]; nom: stri
           </li>
           <li>
             <button type="button" onClick={() => setPlus(true)} aria-expanded={plus} className="relative flex w-full flex-col items-center justify-center gap-0.5 h-16 active:scale-95 transition-transform">
-              <span className={`text-[22px] leading-none ${plusActif ? 'scale-110' : 'grayscale opacity-60'}`}>☰</span>
+              <span className={`text-[22px] leading-none ${plusActif ? 'scale-110 text-anareka-vert' : 'text-anareka-gris opacity-60'}`}>☰</span>
               <span className={`text-[10px] font-semibold ${plusActif ? 'text-anareka-vert' : 'text-anareka-gris'}`}>Plus</span>
             </button>
           </li>
