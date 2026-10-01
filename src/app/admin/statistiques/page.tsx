@@ -26,7 +26,7 @@ export default async function AdminStatistiquesPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {cartes.map(([titre, valeur, cls]) => (
             <div key={titre} className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-4">
-              <p className="text-[11px] uppercase tracking-wide text-anareka-gris">{titre}</p>
+              <p className="text-[11px] text-anareka-gris">{titre}</p>
               <p className={`text-2xl font-bold mt-1 ${cls ?? 'text-anareka-noir'}`}>{valeur}</p>
             </div>
           ))}

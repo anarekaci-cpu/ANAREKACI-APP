@@ -18,7 +18,7 @@ export default async function AdminRapportsPage() {
         <div className="grid grid-cols-3 gap-3 text-center">
           {[['Total encaissé', s.encaisse.total], ["Droits d'inscription", s.encaisse.droits], ['Cotisations', s.encaisse.cotisations]].map(([t, v]) => (
             <div key={t} className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-4">
-              <p className="text-xs uppercase tracking-wide text-anareka-gris">{t}</p>
+              <p className="text-xs text-anareka-gris">{t}</p>
               <p className="text-xl font-bold text-anareka-vert mt-1">{formatFCFA(Number(v))}</p>
             </div>
           ))}

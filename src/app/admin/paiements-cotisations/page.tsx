@@ -26,7 +26,7 @@ export default async function AdminPaiementsPage({ searchParams }: { searchParam
           </div>
 
           {enAttente.length === 0 ? (
-            <Vide>Aucun paiement en attente. 🎉</Vide>
+            <Vide>Aucun paiement en attente.</Vide>
           ) : (
             <>
               {/* Un seul formulaire pour « valider la sélection » ; les boutons individuels ont leurs propres formulaires hors du tableau. */}
@@ -36,7 +36,7 @@ export default async function AdminPaiementsPage({ searchParams }: { searchParam
                   <li key={p.id} className="p-4 flex flex-wrap items-center gap-4">
                     <input type="checkbox" form="selection" name="paiementId" value={p.id} className="accent-anareka-vert w-4 h-4" aria-label="Sélectionner" />
                     <div className="flex-1 min-w-48">
-                      <Link href={`/admin/membres/${p.membre_id}`} className="font-semibold text-anareka-vert hover:text-anareka-or">
+                      <Link href={`/admin/membres/${p.membre_id}`} className="font-semibold text-anareka-vert hover:text-anareka-terre">
                         {p.membre?.nom_complet ?? 'Membre supprimé'}
                       </Link>
                       <p className="text-xs text-anareka-gris">

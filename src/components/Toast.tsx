@@ -23,11 +23,19 @@ export default function Toast({ erreur, succes }: { erreur?: string; succes?: st
 
   if (!ouvert) return null
   const ko = !!erreur
+  const COULEURS = ['#f5821f', '#0f9a54', '#ffffff', '#14301c', '#ffa24d']
   return (
     <div className="fixed top-20 right-4 left-4 sm:left-auto sm:w-96 z-[60]" role={ko ? 'alert' : 'status'}>
-      <div className={`toast relative overflow-hidden rounded-anareka-lg shadow-anareka-hov border px-4 py-3 pr-10 text-sm backdrop-blur ${ko ? 'bg-red-50/95 border-red-200 text-red-800' : 'bg-white/95 border-anareka-or/40 text-anareka-vert'}`}>
+      {!ko && (
+        <div className="confetti" aria-hidden>
+          {Array.from({ length: 28 }, (_, i) => (
+            <i key={i} style={{ ['--i' as string]: i, ['--c' as string]: COULEURS[i % COULEURS.length], ['--x' as string]: `${((i * 53) % 260) - 130}px`, ['--y' as string]: `${90 + ((i * 29) % 200)}px`, ['--r' as string]: `${(i * 97) % 540}deg` }} />
+          ))}
+        </div>
+      )}
+      <div className={`toast relative overflow-hidden rounded-anareka-lg shadow-anareka-hov border-2 px-4 py-3 pr-10 text-sm backdrop-blur ${ko ? 'bg-red-50/95 border-red-300 text-red-800' : 'bg-white/95 border-anareka-vert-clair/40 text-anareka-noir'}`}>
         <div className="flex gap-3 items-start">
-          <span className="text-lg leading-none">{ko ? '⚠️' : '✅'}</span>
+          <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white text-sm font-bold ${ko ? 'bg-red-600' : 'bg-anareka-vert-clair'}`}>{ko ? '!' : '✓'}</span>
           <p className="font-medium">{erreur ?? succes}</p>
         </div>
         <button onClick={() => setOuvert(false)} aria-label="Fermer" className="absolute top-2 right-3 text-lg leading-none opacity-50 hover:opacity-100">×</button>

@@ -45,7 +45,7 @@ Commandes : `npm run build`, `npm start`, `npm run lint`, `npm run typecheck`.
 4. Le membre **déclare ses cotisations** (un ou plusieurs mois) ; le trésorier les **valide** (`/admin/paiements-cotisations`). Il peut aussi encaisser directement depuis la fiche du membre.
 5. Reçus PDF téléchargeables pour tout paiement validé.
 
-Les montants (10 000 F de droit, 1 000 F/mois) sont définis **uniquement** dans `src/config/association.ts`.
+Les montants (10 000 F de droit, 2 000 F/mois) sont définis **uniquement** dans `src/config/association.ts`.
 
 ## Architecture
 

@@ -28,7 +28,7 @@ export default async function PaiementsPage() {
             ['Cotisations', totalCotisations],
           ].map(([titre, montant]) => (
             <div key={titre} className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-5">
-              <p className="text-xs text-anareka-gris uppercase tracking-wide mb-1">{titre}</p>
+              <p className="text-xs text-anareka-gris mb-1">{titre}</p>
               <p className="text-2xl font-bold text-anareka-vert">{formatFCFA(Number(montant))}</p>
             </div>
           ))}

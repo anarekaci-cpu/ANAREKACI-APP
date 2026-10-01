@@ -7,7 +7,7 @@ export default function CarteMembrePdf(props: { nom: string; numeroMembre: strin
     <button
       type="button"
       onClick={() => genererCarteMembre(props).save(`carte_${props.numeroMembre}.pdf`)}
-      className="btn-shine bg-anareka-or text-anareka-noir font-semibold text-sm uppercase tracking-wide rounded-anareka px-6 py-2.5 hover:bg-anareka-or-clair transition-colors"
+      className="btn btn-shine bg-anareka-or text-anareka-noir px-7 py-3.5 shadow-anareka-or hover:bg-anareka-or-clair"
     >
       Télécharger ma carte (PDF)
     </button>

@@ -59,7 +59,7 @@ export default async function FormationDetailPage({
               href={formation.fichier_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block bg-anareka-or text-white font-semibold text-sm uppercase tracking-wide px-6 py-2.5 rounded-anareka hover:bg-anareka-or-clair transition-colors"
+              className="inline-block bg-anareka-or text-white font-semibold text-sm px-6 py-2.5 rounded-anareka hover:bg-anareka-or-clair transition-colors"
             >
               Télécharger le document
             </a>

@@ -13,10 +13,10 @@ export default async function MessagesPage() {
       <header className="bg-anareka-vert border-b border-anareka-or/25">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-between gap-4">
           <div>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-anareka-or">Communication</span>
+            <span className="text-[10px] font-semibold text-anareka-or">Communication</span>
             <h1 className="font-serif text-3xl font-bold text-white mt-1">Messagerie</h1>
           </div>
-          <Link href="/messages/nouveau" className="bg-anareka-or text-white font-semibold text-sm uppercase tracking-wide rounded-anareka px-4 py-2 hover:bg-anareka-or-clair transition-colors">
+          <Link href="/messages/nouveau" className="bg-anareka-or text-white font-semibold text-sm rounded-anareka px-4 py-2 hover:bg-anareka-or-clair transition-colors">
             Nouveau message
           </Link>
         </div>
@@ -25,12 +25,12 @@ export default async function MessagesPage() {
       <div className="max-w-4xl mx-auto px-4 py-8 animate-fade-up">
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-4">
-            <p className="text-xs text-anareka-gris uppercase tracking-wide mb-1">Conversations</p>
+            <p className="text-xs text-anareka-gris mb-1">Conversations</p>
             <p className="text-2xl font-bold text-anareka-vert">{conversations.length}</p>
           </div>
           <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-4">
-            <p className="text-xs text-anareka-gris uppercase tracking-wide mb-1">Non lus</p>
-            <p className="text-2xl font-bold text-anareka-or">{nonLus}</p>
+            <p className="text-xs text-anareka-gris mb-1">Non lus</p>
+            <p className="text-2xl font-bold text-anareka-terre">{nonLus}</p>
           </div>
         </div>
 

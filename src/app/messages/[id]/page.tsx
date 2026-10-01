@@ -22,7 +22,7 @@ export default async function ConversationPage({ params, searchParams }: { param
     <main className="min-h-dvh bg-anareka-ivoire">
       <header className="bg-anareka-vert border-b border-anareka-or/25">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-5">
-          <Link href="/messages" className="text-xs uppercase tracking-wide text-anareka-or-clair hover:text-anareka-or">← Messagerie</Link>
+          <Link href="/messages" className="text-xs text-anareka-or-clair hover:text-anareka-terre">← Messagerie</Link>
           <h1 className="font-serif text-2xl font-bold text-white mt-1">{autres || 'Conversation'}</h1>
         </div>
       </header>

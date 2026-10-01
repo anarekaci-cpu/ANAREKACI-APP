@@ -41,7 +41,7 @@ export default function SelectionMois({ grille, moisCourant }: { grille: MoisSel
                   className="accent-anareka-vert w-4 h-4"
                 />
               ) : (
-                <span aria-hidden>{l.statut === 'paye' ? '✓' : '⏳'}</span>
+                <span aria-hidden>{l.statut === 'paye' ? '✓' : '…'}</span>
               )}
               <span className="flex-1">{MOIS_NOMS[l.mois - 1]}</span>
               <span className="sr-only">{l.statut === 'paye' ? 'payé' : l.statut === 'en_attente' ? 'en attente de validation' : 'non payé'}</span>

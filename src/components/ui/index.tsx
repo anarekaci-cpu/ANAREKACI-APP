@@ -3,15 +3,15 @@ import type { ReactNode } from 'react'
 import Toast from '@/components/Toast'
 
 /* Classes partagées (auparavant copiées-collées dans chaque page). */
-export const labelCls = 'block text-xs font-semibold uppercase tracking-wide text-anareka-vert mb-1.5'
+export const labelCls = 'block text-sm font-semibold text-anareka-noir mb-1.5'
 export const champCls =
-  'w-full bg-anareka-ivoire border border-anareka-bordure rounded-anareka px-4 py-2.5 text-sm text-anareka-noir focus:outline-none focus:border-anareka-or focus:ring-2 focus:ring-anareka-or/20 focus:bg-white transition'
+  'w-full bg-white border-2 border-anareka-bordure rounded-anareka px-4 py-3 text-anareka-noir placeholder:text-anareka-gris/60 focus:outline-none focus:border-anareka-vert-clair focus:ring-4 focus:ring-anareka-vert-clair/15 transition'
 export const boutonCls =
-  'bg-anareka-vert text-white font-semibold text-sm uppercase tracking-wide rounded-anareka px-6 py-2.5 hover:bg-anareka-vert-clair transition-colors shadow-anareka disabled:opacity-50 btn-shine'
+  'btn btn-shine bg-anareka-or text-anareka-noir px-6 py-3.5 text-base shadow-anareka-or hover:bg-anareka-or-clair disabled:opacity-50'
 export const boutonPleinCls = `${boutonCls} w-full`
 export const boutonSecondaireCls =
-  'bg-anareka-blanc text-anareka-vert font-semibold text-sm uppercase tracking-wide rounded-anareka px-6 py-2.5 border-2 border-anareka-vert hover:bg-anareka-vert-pale transition-colors'
-export const boutonPetitCls = 'text-xs font-semibold uppercase tracking-wide rounded-anareka px-3 py-1.5 transition-colors'
+  'btn bg-white text-anareka-vert px-6 py-3.5 text-base border-2 border-anareka-vert/80 hover:bg-anareka-vert-pale'
+export const boutonPetitCls = 'btn text-sm px-4 py-2 rounded-xl'
 
 export function Flash({ erreur, succes }: { erreur?: string; succes?: string }) {
   if (!erreur && !succes) return null
@@ -22,8 +22,8 @@ export function Flash({ erreur, succes }: { erreur?: string; succes?: string }) 
 export function Carte({ children, accent = false, className = '' }: { children: ReactNode; accent?: boolean; className?: string }) {
   return (
     <div
-      className={`bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-6 reveal ${
-        accent ? 'border-t-4 border-t-anareka-or' : ''
+      className={`bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-5 sm:p-6 reveal ${
+        accent ? 'border-l-4 border-l-anareka-or' : ''
       } ${className}`}
     >
       {children}
@@ -31,20 +31,19 @@ export function Carte({ children, accent = false, className = '' }: { children: 
   )
 }
 
-/** En-tête vert des pages membres. */
+/** En-tête des pages membres : grand titre sur papier, sous une fine bande de pagne qui défile. */
 export function EnTete({ surtitre, titre, retour }: { surtitre?: string; titre: string; retour?: { href: string; label: string } }) {
   return (
-    <header className="hero-aurora border-b border-anareka-or/25">
-      <div className="hero-pattern absolute inset-0 opacity-60" />
-      <div className="relative max-w-3xl mx-auto px-6 py-8">
-        {surtitre && <span className="reveal text-[10px] font-semibold uppercase tracking-[0.25em] text-anareka-or-clair" style={{ ['--i' as string]: 0 }}>{surtitre}</span>}
-        <h1 className="reveal font-serif text-4xl font-bold text-white mt-1" style={{ ['--i' as string]: 1 }}>{titre}</h1>
-        <div className="reveal w-14 h-0.5 bg-gradient-to-r from-anareka-or to-transparent mt-3" style={{ ['--i' as string]: 2 }} />
+    <header className="bg-anareka-ivoire">
+      <div className="pagne-band pagne-band--anime" aria-hidden />
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 pb-2">
         {retour && (
-          <Link href={retour.href} className="reveal inline-block mt-3 text-xs uppercase tracking-wide text-anareka-or-clair hover:text-white transition-colors" style={{ ['--i' as string]: 3 }}>
-            ← {retour.label}
+          <Link href={retour.href} className="reveal inline-flex items-center gap-1 text-sm font-semibold text-anareka-vert mb-3 active:opacity-60" style={{ ['--i' as string]: 0 }}>
+            <span aria-hidden>←</span> {retour.label}
           </Link>
         )}
+        {surtitre && <p className="reveal text-sm font-bold text-anareka-terre" style={{ ['--i' as string]: 0 }}>{surtitre}</p>}
+        <h1 className="reveal font-serif text-4xl sm:text-5xl font-extrabold text-anareka-noir leading-[1.02]" style={{ ['--i' as string]: 1 }}>{titre}</h1>
       </div>
     </header>
   )
@@ -53,10 +52,11 @@ export function EnTete({ surtitre, titre, retour }: { surtitre?: string; titre: 
 /** En-tête sombre des pages d'administration. */
 export function EnTeteAdmin({ titre, retour = { href: '/admin', label: 'Retour admin' } }: { titre: string; retour?: { href: string; label: string } }) {
   return (
-    <header className="bg-anareka-noir text-white border-b-2 border-anareka-or">
-      <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+    <header className="bg-anareka-noir text-white">
+      <div className="pagne-band" aria-hidden />
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
         <h1 className="font-serif text-xl font-bold">{titre}</h1>
-        <Link href={retour.href} className="text-xs uppercase tracking-wide text-anareka-or-clair hover:text-anareka-or whitespace-nowrap">
+        <Link href={retour.href} className="text-sm font-semibold text-anareka-or-clair hover:text-white whitespace-nowrap">
           {retour.label}
         </Link>
       </div>
@@ -72,7 +72,7 @@ const BADGES = {
 } as const
 
 export function Badge({ children, ton = 'gris' }: { children: ReactNode; ton?: keyof typeof BADGES }) {
-  return <span className={`inline-block text-[11px] font-semibold uppercase tracking-wide rounded-full px-2.5 py-0.5 ${BADGES[ton]}`}>{children}</span>
+  return <span className={`inline-block text-xs font-bold rounded-full px-2.5 py-1 ${BADGES[ton]}`}>{children}</span>
 }
 
 export function Vide({ children }: { children: ReactNode }) {

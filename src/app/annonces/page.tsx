@@ -12,14 +12,14 @@ export default async function AnnoncesPage({ searchParams }: { searchParams: Pro
     <main className="min-h-dvh bg-anareka-ivoire">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 animate-fade-up">
         <div className="mb-8">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-anareka-or">Association</span>
+          <span className="text-[10px] font-semibold text-anareka-or">Association</span>
           <h1 className="font-serif text-3xl font-bold text-anareka-vert mt-1">Annonces</h1>
           <div className="w-12 h-0.5 bg-anareka-or mt-3" />
         </div>
 
         <form className="mb-6 flex gap-2">
           <input name="q" defaultValue={q} placeholder="Rechercher une annonce…" className="w-full bg-white border border-anareka-bordure rounded-anareka px-4 py-2.5 text-sm focus:outline-none focus:border-anareka-or focus:ring-2 focus:ring-anareka-or/20" />
-          <button className="bg-anareka-vert text-white text-xs font-semibold uppercase tracking-wide px-5 rounded-anareka hover:bg-anareka-vert-clair transition-colors">Chercher</button>
+          <button className="bg-anareka-vert text-white text-xs font-semibold px-5 rounded-anareka hover:bg-anareka-vert-clair transition-colors">Chercher</button>
         </form>
 
         {annonces.length === 0 && (

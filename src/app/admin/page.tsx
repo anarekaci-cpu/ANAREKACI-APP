@@ -37,7 +37,7 @@ export default async function AdminPage() {
       <header className="hero-aurora border-b-2 border-anareka-or">
         <div className="hero-pattern absolute inset-0 opacity-50" />
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 py-8">
-          <span className="reveal text-[10px] font-semibold uppercase tracking-[0.25em] text-anareka-or-clair">Espace de gestion · {membre.nom_complet}</span>
+          <span className="reveal text-[10px] font-semibold text-anareka-or-clair">Espace de gestion · {membre.nom_complet}</span>
           <h1 className="reveal font-serif text-3xl font-bold mt-1" style={{ ['--i' as string]: 1 }}>Administration ANAREKA-CI</h1>
           <p className="reveal text-xs text-anareka-or-clair/90 mt-2" style={{ ['--i' as string]: 2 }}>
             {aTraiter > 0 ? `🔔 ${aTraiter} élément${aTraiter > 1 ? 's' : ''} à traiter` : '✓ Rien en attente'}
@@ -49,7 +49,7 @@ export default async function AdminPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {kpis.map(([titre, v, suf], i) => (
             <div key={titre} className="reveal glass card-lift rounded-anareka-lg p-4" style={{ ['--i' as string]: i }}>
-              <p className="text-[10px] uppercase tracking-wider text-anareka-or-clair/80">{titre}</p>
+              <p className="text-[10px]r text-anareka-or-clair/80">{titre}</p>
               <p className="font-serif text-3xl font-bold mt-1"><CountUp valeur={v} suffixe={suf} /></p>
             </div>
           ))}

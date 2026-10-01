@@ -16,7 +16,7 @@ export default function ExportButton({ data, filename, label }: { data: Ligne[];
     <button
       type="button"
       onClick={exporter}
-      className="text-xs font-semibold uppercase tracking-wide bg-anareka-or text-white px-4 py-2 rounded-anareka hover:bg-anareka-or-clair transition-colors"
+      className="text-xs font-semibold bg-anareka-or text-white px-4 py-2 rounded-anareka hover:bg-anareka-or-clair transition-colors"
     >
       {label}
     </button>

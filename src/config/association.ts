@@ -7,13 +7,13 @@
 
 export const ASSOCIATION = {
   sigle: 'ANAREKA-CI',
-  nom: "Association Nationale des Revendeurs d'Attiéké de Côte d'Ivoire",
+  nom: "Association Nationale des Restaurateurs et Kiosques d'Attiéké de Côte d'Ivoire",
   devise: 'FCFA',
 } as const
 
 export const TARIFS = {
   droitInscription: 10_000,
-  cotisationMensuelle: 1_000,
+  cotisationMensuelle: 2_000,
 } as const
 
 export const MOIS_NOMS = [

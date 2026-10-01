@@ -12,11 +12,21 @@ export default async function LoginPage({
 
 
   return (
-    <main className="hero-aurora min-h-dvh flex items-center justify-center px-4">
-      <div className="relative w-full max-w-sm bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure border-t-4 border-t-anareka-or shadow-anareka p-5 sm:p-8 animate-fade-up">
-        <div className="flex justify-center mb-3"><Logo taille={72} priority /></div>
-        <h1 className="font-serif text-2xl font-bold text-center text-anareka-vert mb-1">ANAREKA-CI</h1>
-        <p className="text-center text-anareka-gris text-sm mb-6">Espace membres</p>
+    <main className="min-h-dvh flex flex-col bg-anareka-ivoire">
+      <div className="hero-aurora text-white">
+        <div className="pagne-band pagne-band--anime pagne-band--epais" aria-hidden />
+        <div className="relative max-w-md w-full mx-auto px-5 pt-8 pb-14 flex items-center gap-4">
+          <Logo taille={64} priority />
+          <div>
+            <p className="font-serif text-2xl font-extrabold leading-none">ANAREKA<span className="text-anareka-or">-CI</span></p>
+            <p className="text-sm text-white/70 mt-1">Espace des membres</p>
+          </div>
+        </div>
+      </div>
+      <div className="relative -mt-8 w-full max-w-md mx-auto px-4 pb-10 flex-1">
+        <div className="animate-fade-up rounded-[28px] bg-white border border-anareka-bordure shadow-anareka-hov p-5 sm:p-7">
+        <h1 className="font-serif text-3xl font-extrabold leading-tight">Content de vous revoir</h1>
+        <p className="text-anareka-gris mt-1 mb-6">Entrez votre numéro de téléphone et votre mot de passe.</p>
 
         <Flash erreur={erreur} succes={succes} />
 
@@ -40,10 +50,11 @@ export default async function LoginPage({
 
         <p className="text-center text-sm text-anareka-gris mt-4">
           Pas encore membre ?{' '}
-          <a href="/register" className="text-anareka-vert font-semibold hover:text-anareka-or transition-colors">
+          <a href="/register" className="text-anareka-vert font-semibold hover:text-anareka-terre transition-colors">
             S&apos;inscrire
           </a>
         </p>
+        </div>
       </div>
     </main>
   )

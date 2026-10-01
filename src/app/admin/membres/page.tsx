@@ -68,9 +68,9 @@ export default async function AdminMembresPage({ searchParams }: { searchParams:
 
         <form className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-3 sm:p-4 mb-4 flex flex-col sm:flex-row gap-3">
           <input name="recherche" defaultValue={recherche} placeholder="Nom, téléphone, n° de membre, commune…" className={champCls} />
-          <button className="bg-anareka-vert text-white text-xs font-semibold uppercase tracking-wide px-6 h-12 sm:h-auto rounded-anareka hover:bg-anareka-vert-clair transition-colors">Rechercher</button>
+          <button className="bg-anareka-vert text-white text-xs font-semibold px-6 h-12 sm:h-auto rounded-anareka hover:bg-anareka-vert-clair transition-colors">Rechercher</button>
           {recherche && (
-            <Link href="/admin/membres" className="text-xs font-semibold uppercase text-anareka-gris self-center">Effacer</Link>
+            <Link href="/admin/membres" className="text-xs font-semibold text-anareka-gris self-center">Effacer</Link>
           )}
         </form>
 
@@ -123,7 +123,7 @@ export default async function AdminMembresPage({ searchParams }: { searchParams:
               <thead className="bg-anareka-vert-pale text-anareka-vert text-left">
                 <tr>
                   {['Nom', 'N°', 'Téléphone', 'Commune', 'Statut', 'Actions'].map((h) => (
-                    <th key={h} className="px-4 py-3 text-xs font-semibold uppercase tracking-wide">{h}</th>
+                    <th key={h} className="px-4 py-3 text-xs font-semibold">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -131,7 +131,7 @@ export default async function AdminMembresPage({ searchParams }: { searchParams:
                 {membres.map((m) => (
                   <tr key={m.id} className="hover:bg-anareka-ivoire transition-colors">
                     <td className="px-4 py-3 font-medium">
-                      <Link href={`/admin/membres/${m.id}`} className="text-anareka-vert hover:text-anareka-or">{m.nom_complet}</Link>
+                      <Link href={`/admin/membres/${m.id}`} className="text-anareka-vert hover:text-anareka-terre">{m.nom_complet}</Link>
                       {m.role !== 'membre' && <span className="ml-2"><Badge ton="or">{ROLE_LABELS[m.role]}</Badge></span>}
                     </td>
                     <td className="px-4 py-3 font-mono text-xs text-anareka-noir/70">{m.numero_membre}</td>

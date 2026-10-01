@@ -8,14 +8,14 @@ export default function ProgressRing({ pourcent, taille = 120, epaisseur = 10, c
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: taille, height: taille }}>
       <svg width={taille} height={taille} className="-rotate-90" aria-hidden>
-        <circle cx={taille / 2} cy={taille / 2} r={r} fill="none" strokeWidth={epaisseur} stroke={clair ? 'rgba(255,255,255,.15)' : '#e0e8e0'} />
+        <circle cx={taille / 2} cy={taille / 2} r={r} fill="none" strokeWidth={epaisseur} stroke={clair ? 'rgba(255,255,255,.15)' : '#e4e2d2'} />
         <circle
           cx={taille / 2}
           cy={taille / 2}
           r={r}
           fill="none"
           strokeWidth={epaisseur}
-          stroke="#c9a84c"
+          stroke="#efc94c"
           strokeLinecap="round"
           strokeDasharray={circ}
           className="ring-progress"

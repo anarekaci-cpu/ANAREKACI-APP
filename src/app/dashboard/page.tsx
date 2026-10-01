@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import CarteMembre from '@/components/CarteMembre'
 import CountUp from '@/components/CountUp'
-import ProgressRing from '@/components/ProgressRing'
+import Icone, { type NomIcone } from '@/components/Icones'
+import Pagne from '@/components/Pagne'
 import { Badge, Flash, dateFR } from '@/components/ui'
 import { exigerMembre } from '@/lib/auth/dal'
 import type { FlashParams } from '@/lib/flash'
@@ -9,25 +11,11 @@ import { resumeCotisations } from '@/services/cotisations'
 import { droitDuMembre } from '@/services/droits'
 import { annoncesPubliees, listerEvenements } from '@/services/contenu'
 import { compterNonLues } from '@/services/notifications'
-import { aAccesAdmin } from '@/config/association'
+import { ROLE_LABELS, TARIFS, aAccesAdmin, formatFCFA } from '@/config/association'
 
-const ICONES = {
-  profil: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',
-  cotisations: 'M2 5h20v14H2zM2 10h20',
-  paiements: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8',
-  annonces: 'M3 11l18-5v12L3 14zM11.6 16.8a3 3 0 1 1-5.8-1.6',
-  formations: 'M22 10v6M2 10l10-5 10 5-10 5zM6 12v5c3 3 9 3 12 0v-5',
-  evenements: 'M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z',
-  carte: 'M3 7h18v10H3zM3 11h18M7 15h3',
-  messages: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
-}
-
-function Icone({ d }: { d: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d={d} />
-    </svg>
-  )
+function salut(): string {
+  const h = Number(new Date().toLocaleString('fr-FR', { hour: 'numeric', hour12: false, timeZone: 'Africa/Abidjan' }))
+  return h < 5 ? 'Bonsoir' : h < 18 ? 'Bonjour' : 'Bonsoir'
 }
 
 export default async function DashboardPage({ searchParams }: { searchParams: FlashParams }) {
@@ -44,107 +32,81 @@ export default async function DashboardPage({ searchParams }: { searchParams: Fl
   const annee = new Date().getFullYear()
   const resume = resumeCotisations(membre.id, annee)
   const nonLues = compterNonLues(membre.id)
-  const dernieresAnnonces = annoncesPubliees().slice(0, 2)
-  const prochains = listerEvenements().filter((e) => e.date_debut >= new Date().toISOString()).slice(0, 2)
-  const pourcent = Math.round((resume.nbPayes / 12) * 100)
+  const annonce = annoncesPubliees()[0]
+  const prochain = listerEvenements().find((e) => e.date_debut >= new Date().toISOString())
 
-  const cartes = [
-    { href: '/carte', titre: 'Ma carte', sous: 'Carte de membre numérique', icone: ICONES.carte },
-    { href: '/profil', titre: 'Mon profil', sous: 'Mes informations et mot de passe', icone: ICONES.profil },
-    { href: '/cotisations', titre: 'Cotisations', sous: 'Mes paiements mensuels', icone: ICONES.cotisations },
-    { href: '/paiements', titre: 'Mes paiements', sous: 'Historique et reçus', icone: ICONES.paiements },
-    { href: '/annonces', titre: 'Annonces', sous: "Actualités de l'association", icone: ICONES.annonces },
-    { href: '/evenements', titre: 'Événements', sous: 'Réunions et assemblées', icone: ICONES.evenements },
-    { href: '/formations', titre: 'Formations', sous: "S'inscrire et télécharger", icone: ICONES.formations },
-    { href: '/messages', titre: 'Messages', sous: 'Échanger avec les membres', icone: ICONES.messages },
+  const raccourcis: { href: string; titre: string; icone: NomIcone }[] = [
+    { href: '/paiements', titre: 'Mes paiements', icone: 'paiements' },
+    { href: '/formations', titre: 'Formations', icone: 'formations' },
+    { href: '/messages', titre: 'Messages', icone: 'messages' },
+    { href: '/profil', titre: 'Mon profil', icone: 'profil' },
   ]
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-8">
+    <main className="max-w-3xl mx-auto px-4 pt-6 pb-8 space-y-6">
       <Flash erreur={erreur} succes={succes} />
 
-      <section className="hero-aurora reveal rounded-anareka-lg border border-anareka-or/30 shadow-anareka-hov text-white mb-6">
-        <div className="hero-pattern absolute inset-0 opacity-60" />
-        <div className="relative p-7 sm:p-9 flex flex-col-reverse sm:flex-row items-center sm:items-stretch justify-between gap-6">
-          <div className="text-center sm:text-left">
-            <p className="text-xs text-anareka-or-clair uppercase tracking-[0.2em]">Bienvenue</p>
-            <h1 className="font-serif text-3xl sm:text-4xl font-bold mt-1">{membre.nom_complet}</h1>
-            <p className="text-sm text-white/70 mt-2">
-              N° <span className="font-mono text-white">{membre.numero_membre}</span> · {membre.telephone}
-            </p>
-            <div className="mt-4">
-              {estActif ? <Badge ton="vert">✓ Membre actif</Badge> : <Badge ton="or">⏳ En attente de validation</Badge>}
-            </div>
-          </div>
-          <ProgressRing pourcent={pourcent} taille={132} clair>
-            <span className="font-serif text-3xl font-bold leading-none"><CountUp valeur={pourcent} suffixe="%" /></span>
-            <span className="text-[10px] uppercase tracking-wider text-anareka-or-clair mt-1">cotisé {annee}</span>
-          </ProgressRing>
+      <header className="reveal">
+        <p className="text-anareka-gris font-semibold">{salut()},</p>
+        <h1 className="font-serif text-4xl sm:text-5xl font-extrabold leading-[1.02]">{membre.prenoms}</h1>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {estActif ? <Badge ton="vert">Membre actif</Badge> : <Badge ton="or">En attente de validation</Badge>}
+          <span className="text-sm text-anareka-gris">{ROLE_LABELS[membre.role]}</span>
         </div>
+      </header>
+
+      <div className="reveal" style={{ ['--i' as string]: 1 }}>
+        <CarteMembre nom={membre.nom_complet} numero={membre.numero_membre} depuis={dateFR(membre.cree_le)} role={ROLE_LABELS[membre.role]} actif={estActif} />
+      </div>
+
+      {/* Mon pagne */}
+      <section className="sr rounded-[28px] border border-anareka-bordure bg-anareka-attieke p-5 sm:p-6" aria-labelledby="titre-pagne">
+        <div className="flex items-end justify-between gap-3 mb-4">
+          <div>
+            <h2 id="titre-pagne" className="font-serif text-2xl font-extrabold">Mon pagne {annee}</h2>
+            <p className="text-anareka-gris text-sm mt-0.5"><CountUp valeur={resume.nbPayes} /> carreau{resume.nbPayes > 1 ? 'x' : ''} tissé{resume.nbPayes > 1 ? 's' : ''} sur 12</p>
+          </div>
+          <Link href="/cotisations" className="btn btn-shine shrink-0 whitespace-nowrap bg-anareka-or text-anareka-noir px-4 py-2.5 text-sm shadow-anareka-or">
+            <Icone nom="tisser" taille={18} /> Cotiser
+          </Link>
+        </div>
+        <Pagne annee={annee} mois={resume.grille.map((l) => l.statut)} />
+        <p className="mt-4 text-sm text-anareka-gris">
+          Reste à payer : <strong className="text-anareka-noir"><CountUp valeur={resume.resteAPayer} suffixe=" F" /></strong>
+        </p>
       </section>
 
-      <div className="grid grid-cols-3 gap-3 mb-6 text-center">
-        <div className="reveal card-lift bg-anareka-blanc rounded-anareka border border-anareka-bordure p-4" style={{ ['--i' as string]: 1 }}>
-          <div className="text-2xl font-bold text-anareka-vert"><CountUp valeur={resume.nbPayes} />/12</div>
-          <div className="text-xs text-anareka-gris mt-1">mois payés</div>
-        </div>
-        <div className="reveal card-lift bg-anareka-blanc rounded-anareka border border-anareka-bordure p-4" style={{ ['--i' as string]: 2 }}>
-          <div className="text-2xl font-bold text-anareka-vert"><CountUp valeur={resume.resteAPayer} suffixe=" F" /></div>
-          <div className="text-xs text-anareka-gris mt-1">reste à payer</div>
-        </div>
-        <Link href="/notifications" className="reveal card-lift bg-anareka-blanc rounded-anareka border border-anareka-bordure p-4 hover:border-anareka-or" style={{ ['--i' as string]: 3 }}>
-          <div className="text-2xl font-bold text-anareka-vert"><CountUp valeur={nonLues} /></div>
-          <div className="text-xs text-anareka-gris mt-1">alerte{nonLues > 1 ? 's' : ''} non lue{nonLues > 1 ? 's' : ''}</div>
+      {/* Bento */}
+      <section className="grid grid-cols-2 gap-3" aria-label="À la une">
+        <Link href="/annonces" className="sr card-lift col-span-2 flex gap-4 items-start rounded-[24px] bg-anareka-terre text-white p-5">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-anareka-or text-anareka-noir"><Icone nom="annonces" /></span>
+          <span className="min-w-0">
+            <span className="block text-sm text-white/60">{annonce ? 'Dernière annonce' : 'Annonces'}</span>
+            <span className="block font-serif text-lg font-bold leading-snug">{annonce ? annonce.titre : 'Aucune annonce pour le moment'}</span>
+            {annonce && <span className="block text-sm text-white/70 mt-1 line-clamp-2">{annonce.contenu}</span>}
+          </span>
         </Link>
-      </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {cartes.map((c, i) => (
-          <Link
-            key={c.href}
-            href={c.href}
-            style={{ ['--i' as string]: i + 2 }}
-            className="reveal group card-lift bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure border-t-4 border-t-anareka-vert hover:border-t-anareka-or shadow-anareka p-5"
-          >
-            <div className="text-anareka-vert group-hover:text-anareka-or group-hover:scale-110 origin-left transition-all duration-300 mb-3">
-              <Icone d={c.icone} />
-            </div>
-            <div className="font-semibold text-anareka-vert text-sm">{c.titre}</div>
-            <div className="text-xs text-anareka-gris mt-1">{c.sous}</div>
+        <Link href="/evenements" className="sr card-lift rounded-[24px] bg-white border border-anareka-bordure p-5">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-anareka-vert-pale text-anareka-vert"><Icone nom="evenements" /></span>
+          <span className="block font-serif font-bold mt-3 leading-snug">{prochain ? prochain.titre : 'Événements'}</span>
+          <span className="block text-sm text-anareka-gris mt-0.5">{prochain ? dateFR(prochain.date_debut) : 'Rien de prévu pour l’instant'}</span>
+        </Link>
+
+        <Link href="/notifications" className="sr card-lift rounded-[24px] bg-white border border-anareka-bordure p-5">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-anareka-or-pale text-anareka-terre"><Icone nom="alertes" /></span>
+          <span className="block font-serif text-3xl font-extrabold mt-3 leading-none"><CountUp valeur={nonLues} /></span>
+          <span className="block text-sm text-anareka-gris mt-0.5">alerte{nonLues > 1 ? 's' : ''} non lue{nonLues > 1 ? 's' : ''}</span>
+        </Link>
+
+        {raccourcis.map((c) => (
+          <Link key={c.href} href={c.href} className="sr card-lift flex items-center gap-3 rounded-[22px] bg-white border border-anareka-bordure px-4 py-4">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-anareka-gris-clair text-anareka-vert"><Icone nom={c.icone} taille={20} /></span>
+            <span className="font-bold text-sm">{c.titre}</span>
           </Link>
         ))}
-      </div>
-
-      {(prochains.length > 0 || dernieresAnnonces.length > 0) && (
-        <div className="grid sm:grid-cols-2 gap-6 mt-8">
-          {prochains.length > 0 && (
-            <section className="reveal" style={{ ['--i' as string]: 6 }}>
-              <h2 className="font-serif text-lg font-semibold text-anareka-vert mb-3">À venir</h2>
-              <div className="space-y-3">
-                {prochains.map((e) => (
-                  <Link key={e.id} href="/evenements" className="card-lift block bg-anareka-blanc rounded-anareka border border-anareka-bordure border-l-4 border-l-anareka-or p-4">
-                    <p className="font-semibold text-sm text-anareka-vert">{e.titre}</p>
-                    <p className="text-xs text-anareka-gris mt-1">{dateFR(e.date_debut, true)}{e.lieu && ` · ${e.lieu}`}</p>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
-          {dernieresAnnonces.length > 0 && (
-            <section className="reveal" style={{ ['--i' as string]: 7 }}>
-              <h2 className="font-serif text-lg font-semibold text-anareka-vert mb-3">Dernières annonces</h2>
-              <div className="space-y-3">
-                {dernieresAnnonces.map((a) => (
-                  <Link key={a.id} href="/annonces" className="card-lift block bg-anareka-blanc rounded-anareka border border-anareka-bordure p-4">
-                    <p className="font-semibold text-sm text-anareka-vert">{a.epingle && '📌 '}{a.titre}</p>
-                    <p className="text-xs text-anareka-gris mt-1 line-clamp-2">{a.contenu}</p>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
-      )}
+      </section>
+      <p className="text-center text-xs text-anareka-gris">Cotisation mensuelle : {formatFCFA(TARIFS.cotisationMensuelle).replace(/ /g, ' ')}</p>
     </main>
   )
 }

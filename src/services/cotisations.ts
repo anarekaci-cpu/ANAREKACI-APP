@@ -49,7 +49,8 @@ export function grilleCotisations(membreId: string, annee: number): LigneCotisat
     return {
       mois,
       statut,
-      montant: cotisation?.montant ?? TARIFS.cotisationMensuelle,
+      // Un mois soldé garde le montant réellement versé ; un mois à payer suit toujours le tarif en vigueur.
+      montant: cotisation?.statut === 'paye' ? cotisation.montant : TARIFS.cotisationMensuelle,
       date_paiement: cotisation?.date_paiement ?? null,
       cotisation,
     }

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import ChampsPaiement from '@/components/FormulairePaiement'
+import Pagne from '@/components/Pagne'
 import SelectionMois from '@/components/SelectionMois'
 import { Carte, EnTete, Flash, boutonPleinCls, dateFR } from '@/components/ui'
 import { MOIS_NOMS, TARIFS, aAccesAdmin, formatFCFA } from '@/config/association'
@@ -25,7 +26,7 @@ export default async function CotisationsPage({ searchParams }: { searchParams: 
 
   return (
     <main className="min-h-dvh bg-anareka-ivoire">
-      <EnTete surtitre="Mes finances" titre="Cotisations" />
+      <EnTete titre="Cotisations" retour={{ href: '/dashboard', label: 'Accueil' }} />
 
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6 animate-fade-up">
         <Flash erreur={erreur} succes={succes} />
@@ -44,17 +45,21 @@ export default async function CotisationsPage({ searchParams }: { searchParams: 
           ))}
         </nav>
 
+        <section className="rounded-[28px] border border-anareka-bordure bg-anareka-attieke p-5" aria-label="Mon pagne">
+          <Pagne annee={annee} mois={r.grille.map((l) => l.statut)} />
+        </section>
+
         <div className="grid grid-cols-3 gap-3 text-center">
           <div className="bg-anareka-blanc rounded-anareka border border-anareka-bordure p-4">
             <div className="text-2xl font-bold text-anareka-vert">{r.nbPayes}/12</div>
             <div className="text-xs text-anareka-gris mt-1">mois payés</div>
           </div>
           <div className="bg-anareka-blanc rounded-anareka border border-anareka-bordure p-4">
-            <div className="text-2xl font-bold text-anareka-vert">{formatFCFA(r.totalPaye)}</div>
+            <div className="text-xl font-bold whitespace-nowrap text-anareka-vert">{formatFCFA(r.totalPaye).replace(' FCFA', ' F')}</div>
             <div className="text-xs text-anareka-gris mt-1">total versé</div>
           </div>
           <div className="bg-anareka-blanc rounded-anareka border border-anareka-bordure p-4">
-            <div className="text-2xl font-bold text-anareka-or">{formatFCFA(r.resteAPayer)}</div>
+            <div className="text-xl font-bold whitespace-nowrap text-anareka-terre">{formatFCFA(r.resteAPayer).replace(' FCFA', ' F')}</div>
             <div className="text-xs text-anareka-gris mt-1">reste à payer</div>
           </div>
         </div>
@@ -72,7 +77,7 @@ export default async function CotisationsPage({ searchParams }: { searchParams: 
               <button type="submit" className={boutonPleinCls}>Déclarer mon paiement</button>
             </form>
           ) : !aPayer ? (
-            <p className="text-sm text-anareka-vert font-semibold">🎉 Toutes les cotisations {annee} sont réglées ou en cours de validation.</p>
+            <p className="text-sm text-anareka-vert font-semibold">Toutes les cotisations {annee} sont réglées ou en cours de validation.</p>
           ) : (
             <p className="text-sm text-anareka-terre">Votre adhésion doit être validée avant de pouvoir déclarer une cotisation.</p>
           )}

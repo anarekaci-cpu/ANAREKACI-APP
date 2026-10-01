@@ -14,17 +14,17 @@ export default async function Navbar() {
   if (!membre) return null
 
   const liens: LienNav[] = [
-    { href: '/dashboard', label: 'Accueil', icone: '🏠', onglet: true },
-    { href: '/cotisations', label: 'Cotisations', icone: '💰', onglet: true },
-    { href: '/messages', label: 'Messages', icone: '✉️', onglet: true, compteur: compterMessagesNonLus(membre.id) },
-    { href: '/notifications', label: 'Alertes', icone: '🔔', onglet: true, compteur: compterNonLues(membre.id) },
-    { href: '/formations', label: 'Formations', icone: '📚' },
-    { href: '/annonces', label: 'Annonces', icone: '📣' },
-    { href: '/evenements', label: 'Événements', icone: '📅', pasSurBureau: true },
-    { href: '/paiements', label: 'Mes paiements', icone: '🧾', pasSurBureau: true },
-    { href: '/carte', label: 'Ma carte', icone: '🪪', pasSurBureau: true },
+    { href: '/dashboard', label: 'Accueil', icone: 'accueil', onglet: true },
+    { href: '/cotisations', label: 'Cotisations', icone: 'cotisations', onglet: true },
+    { href: '/messages', label: 'Messages', icone: 'messages', onglet: true, compteur: compterMessagesNonLus(membre.id) },
+    { href: '/formations', label: 'Formations', icone: 'formations', onglet: true },
+    { href: '/notifications', label: 'Alertes', icone: 'alertes', compteur: compterNonLues(membre.id) },
+    { href: '/annonces', label: 'Annonces', icone: 'annonces' },
+    { href: '/evenements', label: 'Événements', icone: 'evenements', pasSurBureau: true },
+    { href: '/paiements', label: 'Mes paiements', icone: 'paiements', pasSurBureau: true },
+    { href: '/carte', label: 'Ma carte', icone: 'carte', pasSurBureau: true },
   ]
-  if (aAccesAdmin(membre.role)) liens.push({ href: '/admin', label: 'Admin', icone: '⚙️' })
+  if (aAccesAdmin(membre.role)) liens.push({ href: '/admin', label: 'Admin', icone: 'admin' })
 
   return <NavbarMenu liens={liens} nom={membre.nom_complet} />
 }
@@ -33,5 +33,5 @@ export default async function Navbar() {
 export async function NavbarEspace() {
   const membre = await membreCourant()
   if (!membre) return null
-  return <div className="h-24 xl:hidden" aria-hidden />
+  return <div className="h-28 xl:hidden" aria-hidden />
 }

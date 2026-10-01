@@ -1,3 +1,4 @@
+import Icone from '@/components/Icones'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Flash, boutonSecondaireCls } from '@/components/ui'
@@ -18,10 +19,10 @@ export default async function DroitInscriptionPage({ searchParams }: { searchPar
   return (
     <main className="min-h-dvh bg-anareka-ivoire">
       <div className="max-w-lg mx-auto px-4 py-12 animate-fade-up">
-        <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure border-t-4 border-t-anareka-or shadow-anareka p-5 sm:p-8">
+        <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure overflow-hidden shadow-anareka p-5 sm:p-8 relative">
           <div className="text-center mb-8">
-            <div className="text-5xl mb-4">🎉</div>
-            <h1 className="font-serif text-2xl font-bold text-anareka-vert mb-2">Bienvenue, {membre.nom} !</h1>
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-anareka-vert text-white animate-bounce-in"><Icone nom="check" taille={32} trait={3} /></div>
+            <h1 className="font-serif text-3xl font-extrabold mb-2">Bienvenue, {membre.nom} !</h1>
             <p className="text-anareka-gris text-sm">
               Votre numéro de membre : <span className="font-mono font-semibold text-anareka-vert">{membre.numero_membre}</span>
             </p>
@@ -39,11 +40,11 @@ export default async function DroitInscriptionPage({ searchParams }: { searchPar
 
           {droit?.statut === 'en_attente_validation' ? (
             <div className="bg-anareka-or-pale rounded-anareka p-4 mb-6 border border-anareka-or/40">
-              <h3 className="font-semibold text-anareka-terre mb-1">⏳ Demande en attente</h3>
+              <h3 className="font-semibold text-anareka-terre mb-1">Demande en attente</h3>
               <p className="text-sm text-anareka-terre">
                 Votre déclaration de paiement est en cours de validation par le bureau. Vous serez notifié dès qu&apos;elle sera traitée.
               </p>
-              <Link href="/dashboard" className="inline-block mt-3 text-sm font-semibold text-anareka-vert hover:text-anareka-or">
+              <Link href="/dashboard" className="inline-block mt-3 text-sm font-semibold text-anareka-vert hover:text-anareka-terre">
                 Aller au tableau de bord →
               </Link>
             </div>
@@ -58,7 +59,7 @@ export default async function DroitInscriptionPage({ searchParams }: { searchPar
               )}
               <Link
                 href="/droit-inscription/payer"
-                className="block w-full bg-anareka-vert text-white font-semibold text-sm uppercase tracking-wide rounded-anareka py-3 text-center hover:bg-anareka-vert-clair transition-colors shadow-anareka"
+                className="block w-full bg-anareka-vert text-white font-semibold text-sm rounded-anareka py-3 text-center hover:bg-anareka-vert-clair transition-colors shadow-anareka"
               >
                 Déclarer mon paiement ({formatFCFA(TARIFS.droitInscription)})
               </Link>

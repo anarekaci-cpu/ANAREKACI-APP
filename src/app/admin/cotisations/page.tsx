@@ -58,7 +58,7 @@ export default async function AdminCotisationsPage({ searchParams }: { searchPar
             <table className="w-full text-xs">
               <thead className="bg-anareka-vert-pale text-anareka-vert">
                 <tr>
-                  <th className="sticky left-0 z-10 bg-anareka-vert-pale px-3 py-3 text-left font-semibold uppercase">Membre</th>
+                  <th className="sticky left-0 z-10 bg-anareka-vert-pale px-3 py-3 text-left font-semibold ">Membre</th>
                   {MOIS_NOMS.map((n) => <th key={n} className="px-1.5 py-3 font-semibold" title={n}>{n.slice(0, 3)}</th>)}
                 </tr>
               </thead>
@@ -66,11 +66,11 @@ export default async function AdminCotisationsPage({ searchParams }: { searchPar
                 {lignes.map(({ m, payes, attente }) => (
                   <tr key={m.id} className="hover:bg-anareka-ivoire">
                     <td className="sticky left-0 z-10 bg-white px-3 py-2 font-medium whitespace-nowrap">
-                      <Link href={`/admin/membres/${m.id}`} className="text-anareka-vert hover:text-anareka-or">{m.nom_complet}</Link>
+                      <Link href={`/admin/membres/${m.id}`} className="text-anareka-vert hover:text-anareka-terre">{m.nom_complet}</Link>
                     </td>
                     {MOIS_NOMS.map((n, i) => (
                       <td key={n} className="px-1.5 py-2 text-center" title={`${n} ${annee}`}>
-                        {payes.has(i + 1) ? <span className="text-anareka-vert">✓</span> : attente.has(i + 1) ? <span>⏳</span> : <span className="text-anareka-gris/40">·</span>}
+                        {payes.has(i + 1) ? <span className="text-anareka-vert">✓</span> : attente.has(i + 1) ? <span>…</span> : <span className="text-anareka-gris/40">·</span>}
                       </td>
                     ))}
                   </tr>
@@ -79,7 +79,7 @@ export default async function AdminCotisationsPage({ searchParams }: { searchPar
             </table>
           )}
         </div>
-        <p className="text-xs text-anareka-gris">✓ payé · ⏳ en attente de validation · · non payé</p>
+        <p className="text-xs text-anareka-gris">✓ payé · … en attente de validation · · non payé</p>
       </div>
     </main>
   )

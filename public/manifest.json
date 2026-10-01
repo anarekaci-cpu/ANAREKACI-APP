@@ -1,11 +1,11 @@
 {
   "name": "ANAREKA-CI",
   "short_name": "ANAREKA",
-  "description": "Application de gestion de l'Association Nationale des Revendeurs d'Attiéké de Côte d'Ivoire",
+  "description": "Application de gestion de l'Association Nationale des Restaurateurs et Kiosques d'Attiéké de Côte d'Ivoire",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f8f4ec",
-  "theme_color": "#1a3d2b",
+  "background_color": "#f8f6ec",
+  "theme_color": "#14301c",
   "orientation": "portrait",
   "icons": [
     { "src": "/icon-192.png", "sizes": "500x500", "type": "image/png", "purpose": "any" },

@@ -14,9 +14,9 @@ const dejaVu = () => {
 }
 
 /**
- * Écran d'ouverture animé : une seule fois par session de navigateur (pas à chaque page).
- * La disparition est gérée en CSS pur (`animation: splash-out`) ; un clic la raccourcit.
- * Désactivé si l'utilisateur a demandé « mouvement réduit ».
+ * Ouverture : sept bandes de pagne se tissent depuis les deux bords, le logo (sur disque blanc)
+ * surgit au centre avec une onde, les lettres retombent une à une, puis l'écran se referme en iris.
+ * Une seule fois par session ; un toucher la raccourcit ; désactivée si « mouvement réduit ».
  */
 export default function Splash() {
   const vu = useSyncExternalStore(subscribe, dejaVu, () => false)
@@ -31,21 +31,24 @@ export default function Splash() {
   if (vu) return null
   return (
     <div className="splash" role="presentation" onClick={(e) => (e.currentTarget.style.display = 'none')} aria-hidden>
-      <div className="splash__glow" />
-      <div className="splash__logo">
-        <svg className="splash__ring" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="48" />
-        </svg>
-        <Logo taille={132} priority />
-      </div>
-      <div className="splash__title">
-        {'ANAREKA-CI'.split('').map((l, i) => (
-          <span key={i} style={{ ['--i' as string]: i }}>{l}</span>
+      <div className="splash__bandes">
+        {Array.from({ length: 7 }, (_, i) => (
+          <div key={i} className="splash__bande" style={{ ['--i' as string]: i, ['--from' as string]: i % 2 ? '110%' : '-110%' }} />
         ))}
       </div>
-      <div className="splash__line" />
-      <p className="splash__tag">Attiéké de Côte d&apos;Ivoire</p>
-      <span className="splash__skip">Toucher pour passer</span>
+      <div className="splash__centre">
+        <div className="relative">
+          <span className="splash__halo" />
+          <Logo taille={124} priority />
+        </div>
+        <div className="splash__titre">
+          {'ANAREKA-CI'.split('').map((l, i) => (
+            <span key={i} style={{ ['--i' as string]: i }}>{l}</span>
+          ))}
+        </div>
+        <p className="splash__tag">L&apos;attiéké, ensemble.</p>
+      </div>
+      <span className="splash__skip">Touchez pour passer</span>
     </div>
   )
 }
