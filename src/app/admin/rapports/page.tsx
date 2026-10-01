@@ -1,183 +1,58 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
-import { estAdmin, getMembreParCompte } from '@/lib/membres'
+import ExportButton from '@/components/ExportButton'
+import { Carte, EnTeteAdmin } from '@/components/ui'
+import { MOIS_NOMS, formatFCFA } from '@/config/association'
+import { exigerPermission } from '@/lib/auth/dal'
+import { listerPaiements } from '@/services/paiements'
+import { statistiquesGlobales } from '@/services/stats'
 
 export default async function AdminRapportsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const { data: monProfil } = await getMembreParCompte(supabase, user.id)
-  if (!monProfil || !estAdmin(monProfil.role)) {
-    redirect('/dashboard')
-  }
-
-  const currentYear = new Date().getFullYear()
-
-  // Statistiques financières annuelles
-  const { data: cotisations } = await supabase
-    .from('cotisations')
-    .select('montant, statut, mois, annee')
-    .eq('annee', currentYear)
-
-  const { data: droits } = await supabase
-    .from('droits_inscription')
-    .select('montant, statut, date_paiement')
-
-  const { data: paiements } = await supabase
-    .from('paiements')
-    .select('montant, statut, type, date_paiement')
-
-  // Calculs financiers
-  const totalCotisations = cotisations?.reduce((sum, c) => sum + (c.statut === 'paye' ? c.montant : 0), 0) || 0
-  const totalDroits = droits?.reduce((sum, d) => sum + (d.statut === 'paye' ? d.montant : 0), 0) || 0
-  const totalAutres = paiements?.reduce((sum, p) => sum + (p.statut === 'paye' ? p.montant : 0), 0) || 0
-  const totalGeneral = totalCotisations + totalDroits + totalAutres
-
-  // Cotisations par mois
-  const cotisationsParMois = Array(12).fill(0)
-  cotisations?.forEach(c => {
-    if (c.statut === 'paye' && c.mois >= 1 && c.mois <= 12) {
-      cotisationsParMois[c.mois - 1] += c.montant
-    }
-  })
-
-  const moisNoms = [
-    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-  ]
-
-  // Statistiques membres
-  const { count: totalMembres } = await supabase
-    .from('membres')
-    .select('*', { count: 'exact', head: true })
-
-  const { count: membresActifs } = await supabase
-    .from('membres')
-    .select('*', { count: 'exact', head: true })
-    .eq('statut', 'actif')
+  await exigerPermission('rapports')
+  const s = statistiquesGlobales()
+  const max = Math.max(1, ...s.parMois.map((m) => m.total))
+  const valides = listerPaiements({ statut: 'valide' })
 
   return (
-    <main className="min-h-screen bg-anareka-ivoire">
-      <header className="bg-anareka-noir text-white border-b-2 border-anareka-or">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="font-serif text-xl font-bold">Rapports Financiers</h1>
-          <a href="/admin" className="text-xs uppercase tracking-wide text-anareka-or-clair hover:text-anareka-or transition-colors">Retour admin</a>
-        </div>
-      </header>
-
-      <div className="max-w-6xl mx-auto px-4 py-8 animate-fade-up">
-        {/* Résumé financier */}
-        <div className="mb-8">
-          <h2 className="font-serif text-xl font-semibold text-anareka-vert mb-4">Résumé financier {currentYear}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-6">
-              <p className="text-xs text-anareka-gris uppercase tracking-wide mb-1">Total général</p>
-              <p className="text-3xl font-bold text-anareka-vert">{totalGeneral.toLocaleString('fr-FR')} F</p>
+    <main className="min-h-dvh bg-anareka-ivoire">
+      <EnTeteAdmin titre={`Rapport financier ${s.cotisations.annee}`} />
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6 animate-fade-up">
+        <div className="grid grid-cols-3 gap-3 text-center">
+          {[['Total encaissé', s.encaisse.total], ["Droits d'inscription", s.encaisse.droits], ['Cotisations', s.encaisse.cotisations]].map(([t, v]) => (
+            <div key={t} className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-4">
+              <p className="text-xs uppercase tracking-wide text-anareka-gris">{t}</p>
+              <p className="text-xl font-bold text-anareka-vert mt-1">{formatFCFA(Number(v))}</p>
             </div>
-            <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-6">
-              <p className="text-xs text-anareka-gris uppercase tracking-wide mb-1">Cotisations</p>
-              <p className="text-3xl font-bold text-anareka-vert">{totalCotisations.toLocaleString('fr-FR')} F</p>
-            </div>
-            <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-6">
-              <p className="text-xs text-anareka-gris uppercase tracking-wide mb-1">Droits inscription</p>
-              <p className="text-3xl font-bold text-anareka-vert">{totalDroits.toLocaleString('fr-FR')} F</p>
-            </div>
-            <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-6">
-              <p className="text-xs text-anareka-gris uppercase tracking-wide mb-1">Autres revenus</p>
-              <p className="text-3xl font-bold text-anareka-vert">{totalAutres.toLocaleString('fr-FR')} F</p>
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Cotisations mensuelles */}
-        <div className="mb-8">
-          <h2 className="font-serif text-xl font-semibold text-anareka-vert mb-4">Cotisations par mois - {currentYear}</h2>
-          <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-6">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {moisNoms.map((mois, index) => (
-                <div key={index} className="text-center p-4 bg-anareka-ivoire rounded-anareka">
-                  <p className="text-xs text-anareka-gris mb-1">{mois}</p>
-                  <p className="text-lg font-bold text-anareka-vert">
-                    {cotisationsParMois[index].toLocaleString('fr-FR')} F
-                  </p>
-                </div>
-              ))}
-            </div>
+        <Carte>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-serif text-lg font-semibold text-anareka-vert">Encaissements par mois (date de validation)</h2>
+            <ExportButton
+              filename="paiements_anareka"
+              label="Exporter les paiements"
+              data={valides.map((p) => ({
+                Membre: p.membre?.nom_complet ?? '',
+                'N° membre': p.membre?.numero_membre ?? '',
+                Type: p.type,
+                Mois: p.mois,
+                Année: p.annee,
+                Montant: p.montant,
+                Méthode: p.methode,
+                Référence: p.reference,
+                Validé: p.date_validation?.slice(0, 10) ?? '',
+              }))}
+            />
           </div>
-        </div>
-
-        {/* Statistiques membres */}
-        <div className="mb-8">
-          <h2 className="font-serif text-xl font-semibold text-anareka-vert mb-4">Statistiques des membres</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-6">
-              <p className="text-xs text-anareka-gris uppercase tracking-wide mb-1">Total membres</p>
-              <p className="text-3xl font-bold text-anareka-vert">{totalMembres || 0}</p>
-            </div>
-            <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-6">
-              <p className="text-xs text-anareka-gris uppercase tracking-wide mb-1">Membres actifs</p>
-              <p className="text-3xl font-bold text-anareka-vert">{membresActifs || 0}</p>
-            </div>
-            <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-6">
-              <p className="text-xs text-anareka-gris uppercase tracking-wide mb-1">Taux d&apos;activité</p>
-              <p className="text-3xl font-bold text-anareka-vert">
-                {totalMembres ? Math.round((membresActifs || 0) / totalMembres * 100) : 0}%
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Répartition des revenus */}
-        <div className="mb-8">
-          <h2 className="font-serif text-xl font-semibold text-anareka-vert mb-4">Répartition des revenus</h2>
-          <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-6">
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-anareka-noir">Cotisations</span>
-                  <span className="font-semibold text-anareka-vert">
-                    {totalGeneral > 0 ? Math.round(totalCotisations / totalGeneral * 100) : 0}%
-                  </span>
-                </div>
-                <div className="w-full bg-anareka-ivoire rounded-full h-3">
-                  <div
-                    className="bg-anareka-vert h-3 rounded-full transition-all"
-                    style={{ width: `${totalGeneral > 0 ? (totalCotisations / totalGeneral * 100) : 0}%` }}
-                  />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-anareka-noir">Droits d&apos;inscription</span>
-                  <span className="font-semibold text-anareka-or">
-                    {totalGeneral > 0 ? Math.round(totalDroits / totalGeneral * 100) : 0}%
-                  </span>
-                </div>
-                <div className="w-full bg-anareka-ivoire rounded-full h-3">
-                  <div
-                    className="bg-anareka-or h-3 rounded-full transition-all"
-                    style={{ width: `${totalGeneral > 0 ? (totalDroits / totalGeneral * 100) : 0}%` }}
-                  />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-anareka-noir">Autres revenus</span>
-                  <span className="font-semibold text-anareka-terre">
-                    {totalGeneral > 0 ? Math.round(totalAutres / totalGeneral * 100) : 0}%
-                  </span>
-                </div>
-                <div className="w-full bg-anareka-ivoire rounded-full h-3">
-                  <div
-                    className="bg-anareka-terre h-3 rounded-full transition-all"
-                    style={{ width: `${totalGeneral > 0 ? (totalAutres / totalGeneral * 100) : 0}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+          <ul className="space-y-2 text-sm">
+            {s.parMois.map((m) => (
+              <li key={m.mois} className="grid grid-cols-[6rem_1fr_7rem] items-center gap-3">
+                <span>{MOIS_NOMS[m.mois - 1]}</span>
+                <div className="h-2 bg-anareka-vert-pale rounded-full"><div className="h-2 bg-anareka-vert rounded-full" style={{ width: `${(m.total / max) * 100}%` }} /></div>
+                <span className="text-right font-semibold">{formatFCFA(m.total)}</span>
+              </li>
+            ))}
+          </ul>
+        </Carte>
       </div>
     </main>
   )

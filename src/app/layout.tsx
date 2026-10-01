@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
-import Navbar from '@/components/Navbar'
+import Navbar, { NavbarEspace } from '@/components/Navbar'
+import Splash from '@/components/Splash'
 
 export const metadata: Metadata = {
   title: 'ANAREKA-CI',
@@ -14,7 +15,10 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#2ecc71',
+  themeColor: '#1a3d2b',
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({
@@ -24,9 +28,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" data-scroll-behavior="smooth">
-      <body className="bg-anareka-ivoire min-h-screen">
+      <body className="bg-anareka-ivoire min-h-dvh">
+        <Splash />
         <Navbar />
         {children}
+        <NavbarEspace />
       </body>
     </html>
   )

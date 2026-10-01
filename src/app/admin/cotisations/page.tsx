@@ -1,181 +1,85 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
-import { estAdmin, getMembreParCompte } from '@/lib/membres'
+import Link from 'next/link'
+import { EnTeteAdmin, Flash, Vide, boutonPetitCls } from '@/components/ui'
+import { MOIS_NOMS, formatFCFA } from '@/config/association'
+import { exigerPermission } from '@/lib/auth/dal'
+import { lire } from '@/lib/db/store'
+import { anneesDisponibles } from '@/services/cotisations'
+import { envoyerRappels } from './actions'
 
-type MembreWithCotisations = {
-  id: string
-  nom_complet: string
-  numero_membre: string | null
-  telephone: string | null
-  statut: string
-  cotisations?: Array<{
-    id: string
-    annee: number
-    mois: number
-    statut: string
-    montant: number
-    date_paiement: string | null
-  }>
-}
+export default async function AdminCotisationsPage({ searchParams }: { searchParams: Promise<{ annee?: string; erreur?: string; succes?: string }> }) {
+  await exigerPermission('paiements')
+  const { annee: param, erreur, succes } = await searchParams
+  const annees = anneesDisponibles()
+  const annee = annees.includes(Number(param)) ? Number(param) : annees[0]
 
-export default async function AdminCotisationsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const { data: monProfil } = await getMembreParCompte(supabase, user.id)
-  if (!monProfil || !estAdmin(monProfil.role)) {
-    redirect('/dashboard')
-  }
-
-  const currentYear = new Date().getFullYear()
-
-  // Récupérer tous les membres avec leurs cotisations
-  const { data: membres } = await supabase
-    .from('membres')
-    .select(`
-      id,
-      nom_complet,
-      numero_membre,
-      telephone,
-      statut,
-      cotisations (
-        id,
-        annee,
-        mois,
-        statut,
-        montant,
-        date_paiement
-      )
-    `)
-    .eq('statut', 'actif')
-    .order('nom_complet', { ascending: true }) as { data: MembreWithCotisations[] | null }
-
-  // Calculer les statistiques globales
-  const totalMembres = membres?.length || 0
-  let totalCotisations = 0
-  let totalEnRetard = 0
-  let totalPaye = 0
-
-  membres?.forEach((membre: MembreWithCotisations) => {
-    const cotisationsAnnee = membre.cotisations?.filter((c) => c.annee === currentYear) || []
-    const cotisationsPayees = cotisationsAnnee.filter((c) => c.statut === 'paye').length
-    const currentMonth = new Date().getMonth() + 1
-    const cotisationsEnRetard = cotisationsAnnee.filter((c) => 
-      c.statut === 'non_paye' && c.mois < currentMonth
-    ).length
-
-    totalCotisations += cotisationsPayees * 2000
-    totalEnRetard += cotisationsEnRetard
-    totalPaye += cotisationsPayees
+  const db = lire()
+  const actifs = db.membres.filter((m) => m.statut === 'actif').sort((a, b) => a.nom_complet.localeCompare(b.nom_complet))
+  const lignes = actifs.map((m) => {
+    const payes = new Set(db.cotisations.filter((c) => c.membre_id === m.id && c.annee === annee && c.statut === 'paye').map((c) => c.mois))
+    const attente = new Set(db.paiements.filter((p) => p.membre_id === m.id && p.type === 'cotisation' && p.annee === annee && p.statut === 'en_attente').map((p) => p.mois))
+    return { m, payes, attente }
   })
+  const totalPayes = lignes.reduce((s, l) => s + l.payes.size, 0)
+  const attendu = lignes.length * 12
+  const encaisse = db.cotisations.filter((c) => c.annee === annee && c.statut === 'paye').reduce((s, c) => s + c.montant, 0)
 
   return (
-    <main className="min-h-screen bg-anareka-ivoire">
-      <header className="bg-anareka-noir text-white border-b-2 border-anareka-or">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="font-serif text-xl font-bold">Gestion des cotisations</h1>
-          <a href="/admin" className="text-xs uppercase tracking-wide text-anareka-or-clair hover:text-anareka-or transition-colors">Retour admin</a>
-        </div>
-      </header>
-
-      <div className="max-w-6xl mx-auto px-4 py-8 animate-fade-up">
-        {/* Statistiques globales */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
-          <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-5">
-            <p className="text-xs text-anareka-gris uppercase tracking-wide mb-1">Membres actifs</p>
-            <p className="text-3xl font-bold text-anareka-vert">{totalMembres}</p>
-          </div>
-          <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-5">
-            <p className="text-xs text-anareka-gris uppercase tracking-wide mb-1">Total collecté ({currentYear})</p>
-            <p className="text-3xl font-bold text-anareka-vert">{totalCotisations.toLocaleString('fr-FR')} <span className="text-lg">F</span></p>
-          </div>
-          <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-5">
-            <p className="text-xs text-anareka-gris uppercase tracking-wide mb-1">Mois payés</p>
-            <p className="text-3xl font-bold text-anareka-vert">{totalPaye}</p>
-          </div>
-          <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-5">
-            <p className="text-xs text-anareka-gris uppercase tracking-wide mb-1">En retard</p>
-            <p className="text-3xl font-bold text-red-600">{totalEnRetard}</p>
-          </div>
+    <main className="min-h-dvh bg-anareka-ivoire">
+      <EnTeteAdmin titre={`Suivi des cotisations ${annee}`} />
+      <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 animate-fade-up">
+        <Flash erreur={erreur} succes={succes} />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+        <nav className="flex gap-2">
+          {annees.map((a) => (
+            <Link key={a} href={`/admin/cotisations?annee=${a}`} className={`px-4 py-1.5 rounded-full text-sm font-semibold border ${a === annee ? 'bg-anareka-vert text-white border-anareka-vert' : 'bg-white text-anareka-vert border-anareka-bordure'}`}>
+              {a}
+            </Link>
+          ))}
+        </nav>
+        {annee === new Date().getFullYear() && (
+          <form action={envoyerRappels}>
+            <input type="hidden" name="annee" value={annee} />
+            <input type="hidden" name="mois" value={new Date().getMonth() + 1} />
+            <button className={`${boutonPetitCls} bg-anareka-or text-white hover:bg-anareka-or-clair !px-4 !py-2 btn-shine`}>🔔 Rappeler les retardataires ({MOIS_NOMS[new Date().getMonth()]})</button>
+          </form>
+        )}
         </div>
 
-        {/* Tableau des membres et leurs cotisations */}
-        <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka overflow-hidden">
-          <div className="px-6 py-4 border-b border-anareka-bordure">
-            <h2 className="font-serif text-xl font-semibold text-anareka-vert">Cotisations par membre - {currentYear}</h2>
-          </div>
-          
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-anareka-vert-pale text-anareka-vert text-left">
+        <div className="grid grid-cols-3 gap-3 text-center">
+          <div className="bg-anareka-blanc rounded-anareka border border-anareka-bordure p-4"><div className="text-2xl font-bold text-anareka-vert">{actifs.length}</div><div className="text-xs text-anareka-gris">membres actifs</div></div>
+          <div className="bg-anareka-blanc rounded-anareka border border-anareka-bordure p-4"><div className="text-2xl font-bold text-anareka-vert">{attendu ? Math.round((totalPayes / attendu) * 100) : 0}%</div><div className="text-xs text-anareka-gris">taux de recouvrement</div></div>
+          <div className="bg-anareka-blanc rounded-anareka border border-anareka-bordure p-4"><div className="text-2xl font-bold text-anareka-vert">{formatFCFA(encaisse)}</div><div className="text-xs text-anareka-gris">encaissé</div></div>
+        </div>
+
+        <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka overflow-x-auto">
+          {lignes.length === 0 ? (
+            <Vide>Aucun membre actif.</Vide>
+          ) : (
+            <table className="w-full text-xs">
+              <thead className="bg-anareka-vert-pale text-anareka-vert">
                 <tr>
-                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide">Membre</th>
-                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide">N° Membre</th>
-                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide">Téléphone</th>
-                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-center">Payés/12</th>
-                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-center">En retard</th>
-                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-right">Total versé</th>
-                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide">Actions</th>
+                  <th className="sticky left-0 z-10 bg-anareka-vert-pale px-3 py-3 text-left font-semibold uppercase">Membre</th>
+                  {MOIS_NOMS.map((n) => <th key={n} className="px-1.5 py-3 font-semibold" title={n}>{n.slice(0, 3)}</th>)}
                 </tr>
               </thead>
               <tbody className="divide-y divide-anareka-bordure">
-                {membres?.map((membre: MembreWithCotisations) => {
-                  const cotisationsAnnee = membre.cotisations?.filter((c) => c.annee === currentYear) || []
-                  const cotisationsPayees = cotisationsAnnee.filter((c) => c.statut === 'paye')
-                  const currentMonth = new Date().getMonth() + 1
-                  const cotisationsEnRetard = cotisationsAnnee.filter((c) => 
-                    c.statut === 'non_paye' && c.mois < currentMonth
-                  )
-                  const totalVerse = cotisationsPayees.reduce((sum: number, c) => sum + c.montant, 0)
-
-                  return (
-                    <tr key={membre.id} className="hover:bg-anareka-ivoire transition-colors">
-                      <td className="px-4 py-3 font-medium text-anareka-noir">
-                        {membre.nom_complet}
+                {lignes.map(({ m, payes, attente }) => (
+                  <tr key={m.id} className="hover:bg-anareka-ivoire">
+                    <td className="sticky left-0 z-10 bg-white px-3 py-2 font-medium whitespace-nowrap">
+                      <Link href={`/admin/membres/${m.id}`} className="text-anareka-vert hover:text-anareka-or">{m.nom_complet}</Link>
+                    </td>
+                    {MOIS_NOMS.map((n, i) => (
+                      <td key={n} className="px-1.5 py-2 text-center" title={`${n} ${annee}`}>
+                        {payes.has(i + 1) ? <span className="text-anareka-vert">✓</span> : attente.has(i + 1) ? <span>⏳</span> : <span className="text-anareka-gris/40">·</span>}
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-anareka-noir/70">
-                        {membre.numero_membre}
-                      </td>
-                      <td className="px-4 py-3 text-anareka-noir/80">
-                        {membre.telephone || '-'}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
-                          cotisationsPayees.length === 12 ? 'bg-anareka-vert-pale text-anareka-vert-clair' :
-                          cotisationsPayees.length >= 6 ? 'bg-anareka-or-pale text-anareka-terre' :
-                          'bg-red-100 text-red-700'
-                        }`}>
-                          {cotisationsPayees.length}/12
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {cotisationsEnRetard.length > 0 ? (
-                          <span className="inline-block px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-                            {cotisationsEnRetard.length}
-                          </span>
-                        ) : (
-                          <span className="text-anareka-gris">-</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right font-mono text-anareka-noir">
-                        {totalVerse.toLocaleString('fr-FR')} F
-                      </td>
-                      <td className="px-4 py-3">
-                        <a 
-                          href={`/admin/membres/${membre.id}/cotisations`}
-                          className="text-xs font-semibold uppercase tracking-wide text-anareka-vert hover:text-anareka-or transition-colors"
-                        >
-                          Détails
-                        </a>
-                      </td>
-                    </tr>
-                  )
-                })}
+                    ))}
+                  </tr>
+                ))}
               </tbody>
             </table>
-          </div>
+          )}
         </div>
+        <p className="text-xs text-anareka-gris">✓ payé · ⏳ en attente de validation · · non payé</p>
       </div>
     </main>
   )

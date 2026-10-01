@@ -1,101 +1,74 @@
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
-import { revalidatePath } from "next/cache"
-import { estAdmin, getMembreParCompte } from "@/lib/membres"
+import { Badge, Carte, EnTeteAdmin, Flash, Vide, boutonCls, boutonPetitCls, champCls, dateFR, labelCls } from '@/components/ui'
+import { exigerPermission } from '@/lib/auth/dal'
+import type { FlashParams } from '@/lib/flash'
+import { toutesLesAnnonces } from '@/services/contenu'
+import { basculer, creer, supprimer } from './actions'
 
-const labelCls = "block text-xs font-semibold uppercase tracking-wide text-anareka-vert mb-1.5"
-const champCls = "w-full bg-anareka-ivoire border border-anareka-bordure rounded-anareka px-4 py-2.5 text-sm text-anareka-noir focus:outline-none focus:border-anareka-or focus:ring-2 focus:ring-anareka-or/20 focus:bg-white transition"
-const submitCls = "bg-anareka-vert text-white font-semibold text-sm uppercase tracking-wide rounded-anareka px-6 py-2.5 hover:bg-anareka-vert-clair transition-colors"
-
-export default async function AdminAnnoncesPage() {
-  const supabase = await createClient()
-  const auth = await supabase.auth.getUser()
-  const user = auth.data.user
-  if (!user) redirect("/login")
-
-  const { data: membre } = await getMembreParCompte(supabase, user.id)
-  if (!membre || !estAdmin(membre.role)) redirect("/dashboard")
-
-  const res = await supabase.from("annonces").select("*").order("cree_le", { ascending: false })
-  const annonces = res.data
-
-  async function creerAnnonce(formData: FormData) {
-    "use server"
-    const supabase = await createClient()
-    const auth = await supabase.auth.getUser()
-    const user = auth.data.user
-    if (!user) return
-    const estPublie = formData.get("publie") === "on"
-    await supabase.from("annonces").insert({
-      titre: formData.get("titre") as string,
-      contenu: formData.get("contenu") as string,
-      auteur_id: user.id,
-      publie: estPublie,
-      publie_le: estPublie ? new Date().toISOString() : null,
-    })
-    revalidatePath("/admin/annonces")
-  }
-
-  async function togglePublier(id: string, publie: boolean) {
-    "use server"
-    const supabase = await createClient()
-    await supabase.from("annonces").update({
-      publie: !publie,
-      publie_le: !publie ? new Date().toISOString() : null,
-    }).eq("id", id)
-    revalidatePath("/admin/annonces")
-  }
+export default async function AdminAnnoncesPage({ searchParams }: { searchParams: FlashParams }) {
+  const { erreur, succes } = await searchParams
+  await exigerPermission('contenu')
+  const annonces = toutesLesAnnonces()
 
   return (
-    <main className="min-h-screen bg-anareka-ivoire">
-      <header className="bg-anareka-noir text-white border-b-2 border-anareka-or">
-        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="font-serif text-xl font-bold">Gestion des annonces</h1>
-          <a href="/admin" className="text-xs uppercase tracking-wide text-anareka-or-clair hover:text-anareka-or">Retour admin</a>
-        </div>
-      </header>
-
+    <main className="min-h-dvh bg-anareka-ivoire">
+      <EnTeteAdmin titre="Gestion des annonces" />
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6 animate-fade-up">
-        <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure border-t-4 border-t-anareka-or shadow-anareka p-6">
+        <Flash erreur={erreur} succes={succes} />
+        <Carte accent>
           <h2 className="font-serif text-xl font-bold text-anareka-vert mb-4">Nouvelle annonce</h2>
-          <form action={creerAnnonce} className="space-y-4">
+          <form action={creer} className="space-y-4">
             <div>
-              <label className={labelCls}>Titre</label>
-              <input name="titre" type="text" required className={champCls} />
+              <label className={labelCls} htmlFor="titre">Titre</label>
+              <input id="titre" name="titre" required maxLength={150} className={champCls} />
             </div>
             <div>
-              <label className={labelCls}>Contenu</label>
-              <textarea name="contenu" required rows={4} className={champCls} />
+              <label className={labelCls} htmlFor="contenu">Contenu</label>
+              <textarea id="contenu" name="contenu" rows={5} required className={champCls} />
             </div>
-            <div className="flex items-center gap-2">
-              <input name="publie" type="checkbox" id="publie" className="rounded accent-anareka-vert" />
-              <label htmlFor="publie" className="text-sm text-anareka-noir">Publier immediatement</label>
+            <div className="flex gap-6 text-sm">
+              <label className="flex items-center gap-2"><input type="checkbox" name="publie" defaultChecked className="accent-anareka-vert" /> Publier maintenant (notifie les membres actifs)</label>
+              <label className="flex items-center gap-2"><input type="checkbox" name="epingle" className="accent-anareka-vert" /> Épingler</label>
             </div>
-            <button type="submit" className={submitCls}>Creer l&apos;annonce</button>
+            <button className={boutonCls}>Créer l&apos;annonce</button>
           </form>
-        </div>
+        </Carte>
 
-        <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-6">
+        <Carte>
           <h2 className="font-serif text-xl font-bold text-anareka-vert mb-4">Annonces existantes</h2>
-          <div className="space-y-3">
-            {annonces?.length === 0 && (
-              <p className="text-sm text-anareka-gris">Aucune annonce pour le moment.</p>
-            )}
-            {annonces?.map((a) => (
-              <div key={a.id} className="flex items-start justify-between gap-4 border border-anareka-bordure rounded-anareka p-4">
-                <div>
-                  <p className="font-semibold text-anareka-noir text-sm">{a.titre}</p>
-                  <p className="text-xs text-anareka-gris mt-1">{a.publie ? "Publie" : "Brouillon"}</p>
-                </div>
-                <form action={togglePublier.bind(null, a.id, a.publie)}>
-                  <button className={a.publie ? "text-xs font-semibold uppercase px-3 py-1.5 rounded-anareka bg-red-100 text-red-700 hover:bg-red-200" : "text-xs font-semibold uppercase px-3 py-1.5 rounded-anareka bg-anareka-vert-pale text-anareka-vert-clair hover:bg-anareka-vert hover:text-white"}>
-                    {a.publie ? "Depublier" : "Publier"}
-                  </button>
-                </form>
-              </div>
-            ))}
-          </div>
-        </div>
+          {annonces.length === 0 ? <Vide>Aucune annonce.</Vide> : (
+            <ul className="space-y-3">
+              {annonces.map((a) => (
+                <li key={a.id} className="border border-anareka-bordure rounded-anareka p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-sm">{a.titre}</p>
+                      <p className="text-xs text-anareka-gris mt-1">{dateFR(a.cree_le)}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      {a.epingle && <Badge ton="or">épinglé</Badge>}
+                      <Badge ton={a.publie ? 'vert' : 'gris'}>{a.publie ? 'publié' : 'brouillon'}</Badge>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    {(['publie', 'epingle'] as const).map((champ) => (
+                      <form key={champ} action={basculer}>
+                        <input type="hidden" name="id" value={a.id} />
+                        <input type="hidden" name="champ" value={champ} />
+                        <button className={`${boutonPetitCls} bg-anareka-vert-pale text-anareka-vert hover:bg-anareka-vert hover:text-white`}>
+                          {champ === 'publie' ? (a.publie ? 'Dépublier' : 'Publier') : a.epingle ? 'Désépingler' : 'Épingler'}
+                        </button>
+                      </form>
+                    ))}
+                    <form action={supprimer}>
+                      <input type="hidden" name="id" value={a.id} />
+                      <button className={`${boutonPetitCls} bg-red-100 text-red-700 hover:bg-red-200`}>Supprimer</button>
+                    </form>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Carte>
       </div>
     </main>
   )

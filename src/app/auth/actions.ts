@@ -1,156 +1,47 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
-import { genererNumeroMembre } from '@/lib/membres'
+import { aAccesAdmin } from '@/config/association'
+import { fermerSession, ouvrirSession } from '@/lib/auth/session'
+import { aller } from '@/lib/flash'
+import { authentifier, inscrireMembre } from '@/services/membres'
 
-const DOMAINE = '@asso.interne'
+const texte = (f: FormData, nom: string) => (typeof f.get(nom) === 'string' ? (f.get(nom) as string) : '')
 
 export async function login(formData: FormData) {
-  const supabase = await createClient()
-  const telephoneRaw = formData.get('telephone')
-  const password = formData.get('password')
+  const telephone = texte(formData, 'telephone')
+  const motDePasse = texte(formData, 'password')
+  if (!telephone || !motDePasse) aller('/login', { erreur: 'Renseignez votre téléphone et votre mot de passe.' })
 
-  if (typeof telephoneRaw !== 'string' || typeof password !== 'string') {
-    return redirect('/login?error=Champs+manquants')
-  }
+  const membre = authentifier(telephone, motDePasse)
+  if (!membre) aller('/login', { erreur: 'Téléphone ou mot de passe incorrect.' })
 
-  const telephone = telephoneRaw.trim().replace(/\s+/g, '')
-
-  if (telephone.length < 8) {
-    return redirect('/login?error=Telephone+invalide')
-  }
-
-  const email = `${telephone}${DOMAINE}`
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
-
-  if (error) {
-    return redirect('/login?error=Telephone+ou+mot+de+passe+incorrect')
-  }
-
-  // Vérifier si l'utilisateur est admin
-  const { data: { user } } = await supabase.auth.getUser()
-  if (user) {
-    const { data: membre } = await supabase
-      .from('membres')
-      .select('role')
-      .eq('compte_id', user.id)
-      .single()
-    
-    if (membre && membre.role === 'admin') {
-      revalidatePath('/', 'layout')
-      redirect('/admin')
-    }
-  }
-
-  revalidatePath('/', 'layout')
-  redirect('/dashboard')
+  await ouvrirSession(membre.id)
+  // Tout rôle de direction (admin, bureau, trésorier, secrétaire) arrive dans l'espace admin.
+  // (Avant, seul « admin » y était envoyé : le bureau atterrissait sur le tableau de bord membre.)
+  redirect(aAccesAdmin(membre.role) ? '/admin' : '/dashboard')
 }
 
 export async function register(formData: FormData) {
-  const supabase = await createClient()
-  const nom = formData.get('nom')
-  const prenoms = formData.get('prenoms')
-  const sexe = formData.get('sexe')
-  const telephoneRaw = formData.get('telephone')
-  const commune_quartier = formData.get('commune_quartier')
-  const type_activite = formData.get('type_activite')
-  const password = formData.get('password')
+  const sexe = texte(formData, 'sexe')
+  if (sexe !== 'homme' && sexe !== 'femme') aller('/register', { erreur: 'Sélectionnez le sexe.' })
 
-  if (
-    typeof nom !== 'string' ||
-    typeof prenoms !== 'string' ||
-    typeof sexe !== 'string' ||
-    typeof telephoneRaw !== 'string' ||
-    typeof commune_quartier !== 'string' ||
-    typeof type_activite !== 'string' ||
-    typeof password !== 'string'
-  ) {
-    return redirect('/register?error=' + encodeURIComponent('Champs obligatoires manquants'))
-  }
-
-  const telephone = telephoneRaw.trim().replace(/\s+/g, '')
-
-  if (telephone.length < 8) {
-    return redirect('/register?error=' + encodeURIComponent('Téléphone invalide'))
-  }
-
-  if (password.length < 8) {
-    return redirect('/register?error=' + encodeURIComponent('Mot de passe trop court (8 min)'))
-  }
-
-  // Vérifier si le numéro de téléphone existe déjà
-  const admin = createAdminClient()
-  const { data: existingMembre } = await admin
-    .from('membres')
-    .select('id')
-    .eq('telephone', telephone)
-    .single()
-
-  if (existingMembre) {
-    return redirect('/register?error=' + encodeURIComponent('Ce numéro de téléphone est déjà utilisé. Connectez-vous ou contactez le bureau.'))
-  }
-
-  const nom_complet = `${nom} ${prenoms}`.trim()
-  const email = `${telephone}${DOMAINE}`
-  
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        identifiant: telephone,
-        nom_complet,
-        telephone,
-      },
-    },
-  })
-
-  if (error) {
-    console.error('ERREUR SIGNUP:', JSON.stringify(error))
-    // Si l'erreur est "User already registered", c'est que le compte auth existe mais pas la fiche membre
-    if (error.message === 'User already registered') {
-      return redirect('/register?error=' + encodeURIComponent('Un compte existe déjà avec ce numéro. Connectez-vous.'))
-    }
-    return redirect('/register?error=' + encodeURIComponent(error.message || JSON.stringify(error)))
-  }
-
-  if (!data.user) {
-    return redirect('/register?error=' + encodeURIComponent('Compte créé mais session introuvable. Connectez-vous.'))
-  }
-  
-  // Générer le numéro de membre unique
-  const numero_membre = await genererNumeroMembre(admin)
-  
-  const { error: membreError } = await admin.from('membres').insert({
-    compte_id: data.user.id,
-    identifiant: telephone,
-    numero_membre,
-    nom,
-    prenoms,
-    nom_complet,
-    telephone,
-    email,
+  const resultat = inscrireMembre({
+    nom: texte(formData, 'nom'),
+    prenoms: texte(formData, 'prenoms'),
     sexe,
-    commune_quartier,
-    type_activite,
-    statut: 'en_attente',
-    role: 'membre',
+    telephone: texte(formData, 'telephone'),
+    commune_quartier: texte(formData, 'commune_quartier'),
+    type_activite: texte(formData, 'type_activite'),
+    motDePasse: texte(formData, 'password'),
   })
+  if (!resultat.ok) aller('/register', { erreur: resultat.erreur })
 
-  if (membreError) {
-    console.error('ERREUR CREATION MEMBRE:', JSON.stringify(membreError))
-    return redirect('/register?error=' + encodeURIComponent('Compte créé, mais la fiche membre n\'a pas pu être enregistrée. Contactez le bureau.'))
-  }
-
-  revalidatePath('/', 'layout')
+  await ouvrirSession(resultat.data.id)
   redirect('/droit-inscription')
 }
 
 export async function logout() {
-  const supabase = await createClient()
-  await supabase.auth.signOut()
+  await fermerSession()
   redirect('/login')
 }

@@ -1,99 +1,75 @@
-"use server"
+'use server'
 
-import { revalidatePath } from "next/cache"
-import { redirect } from "next/navigation"
-import { cookies } from "next/headers"
-import { createClient } from "@/lib/supabase/server"
-import { createAdminClient } from "@/lib/supabase/admin"
-import crypto from "crypto"
-import { estAdmin } from "@/lib/membres"
+import { revalidatePath } from 'next/cache'
+import { cookies } from 'next/headers'
+import { exigerPermission } from '@/lib/auth/dal'
+import { aller } from '@/lib/flash'
+import { changerRoleMembre, changerStatutMembre, reinitialiserMotDePasse as reinitialiser, trouverMembre } from '@/services/membres'
+import { encaisserCotisations } from '@/services/paiements'
+import type { StatutMembre } from '@/lib/db/types'
+import { COOKIE_RESET } from './constantes'
 
-const COOKIE_NAME = "anareka_password_reset"
 
-function genererMotDePasseTemporaire(): string {
-  // 12 caractères alphanumériques, cryptographiquement aléatoires
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789"
-  const octets = crypto.randomBytes(12)
-  let motDePasse = ""
-  for (let i = 0; i < 12; i++) {
-    motDePasse += alphabet[octets[i] % alphabet.length]
-  }
-  return motDePasse
+const STATUTS: StatutMembre[] = ['actif', 'en_attente', 'suspendu']
+
+export async function changerStatut(formData: FormData) {
+  const admin = await exigerPermission('membres')
+  const id = String(formData.get('membreId') ?? '')
+  const statut = String(formData.get('statut') ?? '') as StatutMembre
+  if (!STATUTS.includes(statut)) aller('/admin/membres', { erreur: 'Statut invalide.' })
+  if (id === admin.id && statut === 'suspendu') aller('/admin/membres', { erreur: 'Vous ne pouvez pas vous suspendre vous-même.' })
+
+  const r = changerStatutMembre(id, statut)
+  revalidatePath('/admin/membres')
+  if (!r.ok) aller('/admin/membres', { erreur: r.erreur })
+  aller('/admin/membres', { succes: 'Statut mis à jour.' })
 }
 
-async function checkAdmin() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+/**
+ * Le mot de passe temporaire est transmis à la page par un cookie httpOnly qui expire en 60 s,
+ * pas dans l'URL (une URL finit dans l'historique du navigateur et dans les journaux du serveur).
+ */
+export async function reinitialiserMotDePasse(formData: FormData) {
+  await exigerPermission('membres')
+  const id = String(formData.get('membreId') ?? '')
+  const membre = trouverMembre(id)
+  const r = reinitialiser(id)
+  if (!r.ok || !membre) aller('/admin/membres', { erreur: r.ok ? 'Membre introuvable.' : r.erreur })
 
-  const { data: membre } = await supabase
-    .from("membres")
-    .select("role")
-    .eq("compte_id", user.id)
-    .single()
-
-  if (!membre || !estAdmin(membre.role)) return null
-  return supabase
-}
-
-export async function changerStatut(membreId: string, statut: "actif" | "suspendu" | "en_attente") {
-  const supabase = await checkAdmin()
-  if (!supabase) return { error: "Non autorise" }
-
-  const { error } = await supabase
-    .from("membres")
-    .update({ statut })
-    .eq("id", membreId)
-
-  if (error) return { error: error.message }
-
-  revalidatePath("/admin/membres")
-  return { success: true }
-}
-
-export async function reinitialiserMotDePasse(membreId: string) {
-  const supabase = await checkAdmin()
-  if (!supabase) return { error: "Non autorise" }
-
-  const { data: membre } = await supabase
-    .from("membres")
-    .select("compte_id, nom_complet")
-    .eq("id", membreId)
-    .single()
-
-  if (!membre) return { error: "Membre non trouvé" }
-
-  const nouveauMotDePasse = genererMotDePasseTemporaire()
-
-  const admin = createAdminClient()
-  const { error } = await admin.auth.admin.updateUserById(membre.compte_id, {
-    password: nouveauMotDePasse,
+  const store = await cookies()
+  store.set(COOKIE_RESET, encodeURIComponent(JSON.stringify({ nom: membre.nom_complet, motDePasse: r.data })), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/admin/membres',
+    maxAge: 60,
   })
-
-  if (error) return { error: error.message }
-
-  // Le mot de passe ne transite plus jamais par l'URL (donc plus dans l'historique
-  // du navigateur, les logs serveur/proxy, ni les en-têtes Referer).
-  // On le pose dans un cookie httpOnly, lu une seule fois côté serveur puis détruit
-  // dès l'affichage (voir effacerNotificationMotDePasse ci-dessous).
-  const jar = await cookies()
-  jar.set(
-    COOKIE_NAME,
-    JSON.stringify({ nom: membre.nom_complet, motDePasse: nouveauMotDePasse }),
-    {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/admin/membres",
-      maxAge: 60, // filet de sécurité si jamais l'effacement automatique échoue
-    }
-  )
-
-  revalidatePath("/admin/membres")
-  redirect("/admin/membres")
+  aller('/admin/membres')
 }
 
-export async function effacerNotificationMotDePasse() {
-  const jar = await cookies()
-  jar.delete(COOKIE_NAME)
+export async function changerRole(formData: FormData) {
+  const admin = await exigerPermission('membres')
+  const r = changerRoleMembre(String(formData.get('membreId') ?? ''), String(formData.get('role') ?? ''), admin)
+  revalidatePath('/admin/roles')
+  if (!r.ok) aller('/admin/roles', { erreur: r.erreur })
+  aller('/admin/roles', { succes: 'Rôle mis à jour.' })
+}
+
+/** Encaissement au guichet (espèces…) saisi par le trésorier : validé immédiatement. */
+export async function encaisser(formData: FormData) {
+  const admin = await exigerPermission('paiements')
+  const membreId = String(formData.get('membreId') ?? '')
+  const annee = Number(formData.get('annee'))
+  const r = encaisserCotisations(
+    admin.id,
+    membreId,
+    annee,
+    formData.getAll('mois').map(Number),
+    String(formData.get('methode') ?? ''),
+    String(formData.get('reference') ?? '') || null
+  )
+  const retour = `/admin/membres/${membreId}`
+  revalidatePath(retour)
+  if (!r.ok) aller(retour, { erreur: r.erreur })
+  aller(retour, { succes: `${r.data.crees} cotisation(s) encaissée(s).` })
 }

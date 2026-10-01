@@ -1,44 +1,36 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { exigerMembre } from '@/lib/auth/dal'
+import { aller } from '@/lib/flash'
+import { changerMotDePasse, mettreAJourProfil } from '@/services/membres'
 
-export async function mettreAJourProfil(formData: FormData) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
-    return redirect('/login')
-  }
+const texte = (f: FormData, nom: string) => (typeof f.get(nom) === 'string' ? (f.get(nom) as string) : '')
 
-  const membreId = formData.get('membreId') as string
-  const nom = formData.get('nom') as string
-  const prenoms = formData.get('prenoms') as string
-  const telephone = formData.get('telephone') as string
-  const commune_quartier = formData.get('commune_quartier') as string
-  const type_activite = formData.get('type_activite') as string
+/**
+ * L'identifiant du membre vient de la SESSION, jamais du formulaire (avant, un champ caché
+ * `membreId` était envoyé par le navigateur) et le téléphone n'est plus modifiable ici :
+ * c'est l'identifiant de connexion, son changement passe par le bureau.
+ */
+export async function majProfil(formData: FormData) {
+  const membre = await exigerMembre()
+  const r = mettreAJourProfil(membre.id, {
+    nom: texte(formData, 'nom'),
+    prenoms: texte(formData, 'prenoms'),
+    email: texte(formData, 'email') || null,
+    commune_quartier: texte(formData, 'commune_quartier') || null,
+    type_activite: texte(formData, 'type_activite') || null,
+  })
+  if (!r.ok) aller('/profil', { erreur: r.erreur })
+  revalidatePath('/', 'layout')
+  aller('/profil', { succes: 'Profil mis à jour.' })
+}
 
-  const nom_complet = `${nom} ${prenoms}`.trim()
-
-  const { error } = await supabase
-    .from('membres')
-    .update({
-      nom,
-      prenoms,
-      nom_complet,
-      telephone,
-      commune_quartier,
-      type_activite,
-    })
-    .eq('id', membreId)
-    .eq('compte_id', user.id)
-
-  if (error) {
-    return redirect('/profil?error=' + encodeURIComponent(error.message))
-  }
-
-  revalidatePath('/profil')
-  revalidatePath('/dashboard')
-  redirect('/profil?success=Profil+mise+à+jour+avec+succès')
+export async function majMotDePasse(formData: FormData) {
+  const membre = await exigerMembre()
+  const nouveau = texte(formData, 'nouveau')
+  if (nouveau !== texte(formData, 'confirmation')) aller('/profil', { erreur: 'La confirmation ne correspond pas.' })
+  const r = changerMotDePasse(membre.id, texte(formData, 'actuel'), nouveau)
+  if (!r.ok) aller('/profil', { erreur: r.erreur })
+  aller('/profil', { succes: 'Mot de passe modifié.' })
 }

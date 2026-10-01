@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# données locales (base JSON + clé de session de dev)
+/.data/
+!.env.example

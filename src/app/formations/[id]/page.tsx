@@ -1,88 +1,91 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
+import { Badge, Carte, EnTete, Flash, boutonCls, boutonSecondaireCls, dateFR } from '@/components/ui'
+import { exigerMembre } from '@/lib/auth/dal'
+import type { FlashParams } from '@/lib/flash'
+import { etatInscription, trouverFormation } from '@/services/contenu'
+import { seDesinscrire, sInscrire } from '../actions'
 
 export default async function FormationDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: FlashParams
 }) {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
-    redirect('/login')
-  }
+  const { erreur, succes } = await searchParams
+  const membre = await exigerMembre()
 
-  const { data: formation } = await supabase
-    .from('formations')
-    .select('*')
-    .eq('id', id)
-    .single()
+  // Avant : redirection silencieuse vers la liste ; une vraie page 404 est plus claire.
+  const formation = trouverFormation(id)
+  if (!formation) notFound()
 
-  if (!formation) {
-    redirect('/formations')
-  }
+  const etat = etatInscription(formation.id, membre.id)
+  const actif = membre.statut === 'actif'
 
   return (
-    <main className="min-h-screen bg-anareka-ivoire">
-      <header className="bg-anareka-vert border-b border-anareka-or/25">
-        <div className="max-w-3xl mx-auto px-6 py-6">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-anareka-or">Formations</span>
-          <h1 className="font-serif text-3xl font-bold text-white mt-1">{formation.titre}</h1>
-          <div className="w-12 h-0.5 bg-anareka-or mt-3" />
-        </div>
-      </header>
+    <main className="min-h-dvh bg-anareka-ivoire">
+      <EnTete surtitre="Formations" titre={formation.titre} retour={{ href: '/formations', label: 'Toutes les formations' }} />
 
       <div className="max-w-3xl mx-auto px-4 py-8 animate-fade-up">
-        <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-6">
+        <Flash erreur={erreur} succes={succes} />
+        <Carte className="space-y-5">
           {formation.description && (
-            <div className="mb-6">
-              <h2 className="font-serif text-lg font-semibold text-anareka-vert mb-2">Description</h2>
-              <p className="text-sm text-anareka-noir/80">{formation.description}</p>
-            </div>
+            <section>
+              <h2 className="font-serif text-lg font-semibold text-anareka-vert mb-1">Description</h2>
+              <p className="text-sm text-anareka-noir/80 whitespace-pre-wrap">{formation.description}</p>
+            </section>
           )}
-          
-          {formation.date && (
-            <div className="mb-4">
-              <h2 className="font-serif text-lg font-semibold text-anareka-vert mb-2">Date</h2>
-              <p className="text-sm text-anareka-noir/80">
-                {new Date(formation.date).toLocaleDateString('fr-FR', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric'
-                })}
+          <section className="grid sm:grid-cols-3 gap-4 text-sm">
+            <div>
+              <h2 className="font-semibold text-anareka-vert mb-1">Date</h2>
+              <p className="text-anareka-noir/80">{formation.date_debut ? dateFR(formation.date_debut, true) : 'À définir'}</p>
+            </div>
+            <div>
+              <h2 className="font-semibold text-anareka-vert mb-1">Lieu</h2>
+              <p className="text-anareka-noir/80">{formation.lieu ?? 'À définir'}</p>
+            </div>
+            <div>
+              <h2 className="font-semibold text-anareka-vert mb-1">Places</h2>
+              <p className="text-anareka-noir/80">
+                {etat.nbInscrits} inscrit{etat.nbInscrits > 1 ? 's' : ''}
+                {formation.capacite ? ` / ${formation.capacite}` : ''}
               </p>
             </div>
-          )}
-
-          {formation.lieu && (
-            <div className="mb-4">
-              <h2 className="font-serif text-lg font-semibold text-anareka-vert mb-2">Lieu</h2>
-              <p className="text-sm text-anareka-noir/80">{formation.lieu}</p>
-            </div>
-          )}
+          </section>
 
           {formation.fichier_url && (
-            <div className="mt-6 pt-6 border-t border-anareka-bordure">
-              <a
-                href={formation.fichier_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-anareka-or text-white font-semibold text-sm uppercase tracking-wide px-6 py-2.5 rounded-anareka hover:bg-anareka-or-clair transition-colors"
-              >
-                Télécharger le document
-              </a>
-            </div>
+            <a
+              href={formation.fichier_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block bg-anareka-or text-white font-semibold text-sm uppercase tracking-wide px-6 py-2.5 rounded-anareka hover:bg-anareka-or-clair transition-colors"
+            >
+              Télécharger le document
+            </a>
           )}
-        </div>
 
-        <a
-          href="/formations"
-          className="inline-block mt-6 text-sm font-semibold text-anareka-vert hover:text-anareka-or transition-colors"
-        >
-          ← Retour aux formations
-        </a>
+          <div className="pt-4 border-t border-anareka-bordure">
+            {etat.inscrit ? (
+              <form action={seDesinscrire} className="flex items-center gap-4">
+                <input type="hidden" name="formationId" value={formation.id} />
+                <Badge ton="vert">✓ Vous êtes inscrit(e)</Badge>
+                <button className={boutonSecondaireCls}>Annuler mon inscription</button>
+              </form>
+            ) : !actif ? (
+              <p className="text-sm text-anareka-terre">Votre adhésion doit être validée avant de pouvoir vous inscrire.</p>
+            ) : !formation.ouvert_inscription ? (
+              <Badge ton="gris">Inscriptions closes</Badge>
+            ) : etat.complet ? (
+              <Badge ton="rouge">Formation complète</Badge>
+            ) : (
+              <form action={sInscrire}>
+                <input type="hidden" name="formationId" value={formation.id} />
+                <button className={boutonCls}>Je m&apos;inscris</button>
+              </form>
+            )}
+          </div>
+        </Carte>
       </div>
     </main>
   )

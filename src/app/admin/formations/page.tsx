@@ -1,90 +1,59 @@
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
-import { revalidatePath } from "next/cache"
-import { estAdmin, getMembreParCompte } from "@/lib/membres"
+import { Carte, EnTeteAdmin, Flash, Vide, boutonCls, boutonPetitCls, champCls, dateFR, labelCls } from '@/components/ui'
+import { exigerPermission } from '@/lib/auth/dal'
+import type { FlashParams } from '@/lib/flash'
+import { inscritsDeFormation, listerFormations } from '@/services/contenu'
+import { creer, supprimer } from './actions'
 
-const labelCls = "block text-xs font-semibold uppercase tracking-wide text-anareka-vert mb-1.5"
-const champCls = "w-full bg-anareka-ivoire border border-anareka-bordure rounded-anareka px-4 py-2.5 text-sm text-anareka-noir focus:outline-none focus:border-anareka-or focus:ring-2 focus:ring-anareka-or/20 focus:bg-white transition"
-const submitCls = "bg-anareka-vert text-white font-semibold text-sm uppercase tracking-wide rounded-anareka px-6 py-2.5 hover:bg-anareka-vert-clair transition-colors"
-
-export default async function AdminFormationsPage() {
-  const supabase = await createClient()
-  const auth = await supabase.auth.getUser()
-  const user = auth.data.user
-  if (!user) redirect("/login")
-
-  const { data: membre } = await getMembreParCompte(supabase, user.id)
-  if (!membre || !estAdmin(membre.role)) redirect("/dashboard")
-
-  const res = await supabase.from("formations").select("*").order("cree_le", { ascending: false })
-  const formations = res.data
-
-  async function creerFormation(formData: FormData) {
-    "use server"
-    const supabase = await createClient()
-    const cap = formData.get("capacite")
-    await supabase.from("formations").insert({
-      titre: formData.get("titre") as string,
-      description: formData.get("description") as string,
-      lieu: formData.get("lieu") as string,
-      date_debut: formData.get("date_debut") || null,
-      capacite: cap ? Number(cap) : null,
-      ouvert_inscription: true,
-    })
-    revalidatePath("/admin/formations")
-  }
+export default async function AdminFormationsPage({ searchParams }: { searchParams: FlashParams }) {
+  const { erreur, succes } = await searchParams
+  await exigerPermission('contenu')
+  const formations = listerFormations()
 
   return (
-    <main className="min-h-screen bg-anareka-ivoire">
-      <header className="bg-anareka-noir text-white border-b-2 border-anareka-or">
-        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="font-serif text-xl font-bold">Gestion des formations</h1>
-          <a href="/admin" className="text-xs uppercase tracking-wide text-anareka-or-clair hover:text-anareka-or">Retour admin</a>
-        </div>
-      </header>
-
+    <main className="min-h-dvh bg-anareka-ivoire">
+      <EnTeteAdmin titre="Gestion des formations" />
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6 animate-fade-up">
-        <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure border-t-4 border-t-anareka-or shadow-anareka p-6">
+        <Flash erreur={erreur} succes={succes} />
+        <Carte accent>
           <h2 className="font-serif text-xl font-bold text-anareka-vert mb-4">Nouvelle formation</h2>
-          <form action={creerFormation} className="space-y-4">
-            <div>
-              <label className={labelCls}>Titre</label>
-              <input name="titre" type="text" required className={champCls} />
+          <form action={creer} className="space-y-4">
+            <div><label className={labelCls} htmlFor="titre">Titre</label><input id="titre" name="titre" required className={champCls} /></div>
+            <div><label className={labelCls} htmlFor="description">Description</label><textarea id="description" name="description" rows={3} className={champCls} /></div>
+            <div className="grid sm:grid-cols-3 gap-4">
+              <div><label className={labelCls} htmlFor="lieu">Lieu</label><input id="lieu" name="lieu" className={champCls} /></div>
+              <div><label className={labelCls} htmlFor="date_debut">Date de début</label><input id="date_debut" name="date_debut" type="datetime-local" className={champCls} /></div>
+              <div><label className={labelCls} htmlFor="capacite">Capacité (optionnel)</label><input id="capacite" name="capacite" type="number" min="1" className={champCls} /></div>
             </div>
-            <div>
-              <label className={labelCls}>Description</label>
-              <textarea name="description" rows={3} className={champCls} />
-            </div>
-            <div>
-              <label className={labelCls}>Lieu</label>
-              <input name="lieu" type="text" className={champCls} />
-            </div>
-            <div>
-              <label className={labelCls}>Date de debut</label>
-              <input name="date_debut" type="datetime-local" className={champCls} />
-            </div>
-            <div>
-              <label className={labelCls}>Capacite (optionnel)</label>
-              <input name="capacite" type="number" min="1" className={champCls} />
-            </div>
-            <button type="submit" className={submitCls}>Creer la formation</button>
+            <button className={boutonCls}>Créer la formation</button>
           </form>
-        </div>
+        </Carte>
 
-        <div className="bg-anareka-blanc rounded-anareka-lg border border-anareka-bordure shadow-anareka p-6">
+        <Carte>
           <h2 className="font-serif text-xl font-bold text-anareka-vert mb-4">Formations existantes</h2>
-          <div className="space-y-3">
-            {formations?.length === 0 && (
-              <p className="text-sm text-anareka-gris">Aucune formation pour le moment.</p>
-            )}
-            {formations?.map((f) => (
-              <div key={f.id} className="border border-anareka-bordure rounded-anareka p-4">
-                <p className="font-semibold text-anareka-noir text-sm">{f.titre}</p>
-                <p className="text-xs text-anareka-gris mt-1">{f.lieu ?? "Lieu non defini"}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+          {formations.length === 0 ? <Vide>Aucune formation.</Vide> : (
+            <ul className="space-y-3">
+              {formations.map((f) => {
+                const inscrits = inscritsDeFormation(f.id)
+                return (
+                  <li key={f.id} className="border border-anareka-bordure rounded-anareka p-4">
+                    <div className="flex justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-sm">{f.titre}</p>
+                        <p className="text-xs text-anareka-gris mt-1">{f.date_debut ? dateFR(f.date_debut, true) : 'Date à définir'} · {f.lieu ?? 'Lieu non défini'}</p>
+                        <p className="text-xs text-anareka-gris">{inscrits.length} inscrit{inscrits.length > 1 ? 's' : ''}{f.capacite ? ` / ${f.capacite}` : ''}</p>
+                      </div>
+                      <form action={supprimer}>
+                        <input type="hidden" name="id" value={f.id} />
+                        <button className={`${boutonPetitCls} bg-red-100 text-red-700 hover:bg-red-200 h-fit`}>Supprimer</button>
+                      </form>
+                    </div>
+                    {inscrits.length > 0 && <p className="text-xs text-anareka-noir/70 mt-2">{inscrits.map((i) => i.nom_complet).join(', ')}</p>}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </Carte>
       </div>
     </main>
   )
